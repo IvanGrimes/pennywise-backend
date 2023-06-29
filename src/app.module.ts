@@ -1,0 +1,55 @@
+import { Module } from '@nestjs/common';
+import * as Joi from 'joi';
+import { Environment } from '@src/const/Environment';
+import { ConfigModule } from '@nestjs/config';
+import { UserModule } from '@modules/user';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import {
+  ContextInterceptor,
+  ExceptionInterceptor,
+} from '@lib/app/interceptors';
+import { RequestContextModule } from 'nestjs-request-context';
+import { AuthModule } from '@modules/auth';
+import { AccessTokenGuard } from '@lib/app/guards';
+
+const interceptors = [
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ContextInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ExceptionInterceptor,
+  },
+];
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        PORT: Joi.number().required(),
+        NODE_ENV: Joi.string()
+          .required()
+          .valid(Environment.development, Environment.production),
+        POSTGRES_HOST: Joi.string().required(),
+        POSTGRES_PORT: Joi.number().required(),
+        POSTGRES_USER: Joi.string().required(),
+        POSTGRES_PASSWORD: Joi.string().required(),
+        POSTGRES_DB: Joi.string().required(),
+        ACCESS_TOKEN_SECRET: Joi.string().required(),
+        REFRESH_TOKEN_SECRET: Joi.string().required(),
+        COOKIE_SECRET: Joi.string().required(),
+      }),
+    }),
+    RequestContextModule,
+    UserModule,
+    AuthModule,
+  ],
+  controllers: [],
+  providers: [
+    ...interceptors,
+    { provide: APP_GUARD, useClass: AccessTokenGuard },
+  ],
+})
+export class AppModule {}

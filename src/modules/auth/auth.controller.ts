@@ -1,0 +1,186 @@
+import {
+  Body,
+  ConflictException,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { Response } from 'express';
+import { AuthService } from './auth.service';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
+import {
+  SignUpRequestDto,
+  SignUpResponseDto,
+  SignInRequestDto,
+  SignInResponseDto,
+  RefreshTokenResponseDto,
+  RefreshTokenRequestDto,
+  SignOutResponseDto,
+} from './dto';
+import {
+  RefreshTokenNotFoundOrExpired,
+  UserAlreadyExistsError,
+  UserNotFoundError,
+  WrongCredentialsError,
+  WrongRefreshToken,
+} from './auth.error';
+import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
+import { RefreshTokenGuard } from '@lib/app/guards';
+import { GetUser, GetUserId, Public } from '@lib/app/decorators';
+
+@Controller('/auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('/sign-up')
+  @Public()
+  @ApiOperation({ summary: 'Sign up' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    type: SignUpResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: UserAlreadyExistsError.message,
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+  })
+  async signUp(
+    @Body() signUpDto: SignUpRequestDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    try {
+      const result = await this.authService.signUp(signUpDto);
+
+      this.setRefreshTokenCookie({
+        response,
+        refreshToken: result.refreshToken,
+      });
+
+      return new SignUpResponseDto(result);
+    } catch (e) {
+      if (e instanceof UserAlreadyExistsError) {
+        throw new ConflictException(e.message);
+      }
+
+      throw e;
+    }
+  }
+
+  @Post('/sign-in')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOperation({ summary: 'Sign in' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SignInResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: WrongCredentialsError.message,
+    type: ApiErrorResponseDto,
+  })
+  async signIn(
+    @Body() signInDto: SignInRequestDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    try {
+      const result = await this.authService.signIn(signInDto);
+
+      this.setRefreshTokenCookie({
+        response,
+        refreshToken: result.refreshToken,
+      });
+
+      return new SignInResponseDto(result);
+    } catch (e) {
+      if (
+        e instanceof UserNotFoundError ||
+        e instanceof WrongCredentialsError
+      ) {
+        console.log(e);
+        throw new UnauthorizedException(WrongCredentialsError.message);
+      }
+
+      throw e;
+    }
+  }
+
+  @UseGuards(RefreshTokenGuard)
+  @Post('/refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: RefreshTokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    type: ApiErrorResponseDto,
+  })
+  @Public()
+  async refresh(
+    @Res({ passthrough: true }) response: Response,
+    @GetUserId() userId: number,
+    @GetUser('refreshToken') refreshToken: string,
+  ) {
+    try {
+      const result = await this.authService.refresh(
+        new RefreshTokenRequestDto({ userId, refreshToken }),
+      );
+
+      this.setRefreshTokenCookie({
+        response,
+        refreshToken: result.refreshToken,
+      });
+
+      return new RefreshTokenResponseDto(result);
+    } catch (e) {
+      if (
+        e instanceof UserNotFoundError ||
+        e instanceof RefreshTokenNotFoundOrExpired ||
+        e instanceof WrongRefreshToken
+      ) {
+        throw new UnauthorizedException(RefreshTokenNotFoundOrExpired.message);
+      }
+
+      throw e;
+    }
+  }
+
+  @Post('/sign-out')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: RefreshTokenResponseDto,
+  })
+  async signOut(@GetUserId() userId: number) {
+    await this.authService.signOut({ id: userId });
+
+    return new SignOutResponseDto({ success: true });
+  }
+
+  private setRefreshTokenCookie({
+    response,
+    refreshToken,
+  }: {
+    response: Response;
+    refreshToken: string;
+  }) {
+    const expires = new Date();
+
+    expires.setDate(expires.getDate() + 7);
+
+    response.cookie(refreshTokenCookie, refreshToken, {
+      httpOnly: true,
+      expires,
+      signed: true,
+    });
+  }
+}
