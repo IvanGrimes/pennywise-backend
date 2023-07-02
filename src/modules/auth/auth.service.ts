@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { UserService, FindUserRequestDto } from '@modules/user';
-import {
-  SignUpRequestDto,
-  SignInRequestDto,
-  RefreshTokenRequestDto,
-} from './dto';
+import { UserService } from '@modules/user';
+import { SignUpRequestDto, SignInRequestDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './auth.types';
@@ -13,6 +9,8 @@ import {
   WrongCredentialsError,
   WrongRefreshToken,
 } from './auth.error';
+import * as argon from 'argon2';
+import { UserEntity } from '@modules/user/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +21,10 @@ export class AuthService {
   ) {}
 
   async signUp(signUpDto: SignUpRequestDto) {
-    const user = await this.userService.create(signUpDto);
+    const user = await this.userService.create({
+      ...signUpDto,
+      password: await argon.hash(signUpDto.password),
+    });
     const tokens = await this.getTokens(user);
 
     await this.userService.updateRefreshToken({
@@ -53,10 +54,14 @@ export class AuthService {
     return tokens;
   }
 
-  async refresh({ userId, refreshToken }: RefreshTokenRequestDto) {
-    const user = await this.userService.find(
-      new FindUserRequestDto({ id: userId }),
-    );
+  async refresh({
+    userId,
+    refreshToken,
+  }: {
+    userId: number;
+    refreshToken: string;
+  }) {
+    const user = await this.userService.find({ id: userId });
 
     if (!user.refreshToken || !refreshToken)
       throw new RefreshTokenNotFoundOrExpired();
@@ -82,10 +87,12 @@ export class AuthService {
     await this.userService.removeRefreshToken({ id });
   }
 
-  private async getTokens({ id, email }: { id: number; email: string }) {
+  private async getTokens({ id, email, firstName, lastName }: UserEntity) {
     const jwtPayload: JwtPayload = {
       sub: id,
-      email: email,
+      email,
+      firstName,
+      lastName,
     };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {

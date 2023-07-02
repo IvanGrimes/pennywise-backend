@@ -2,11 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Repository, Not, IsNull } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { userRepositoryDi } from './user.di';
-import {
-  CreateUserRequestDto,
-  FindUserByEmailRequestDto,
-  FindUserRequestDto,
-} from './dto';
+import { CreateUserRequestDto } from './dto';
 import {
   UserAlreadyExistsError,
   UserNotFoundError,
@@ -40,9 +36,9 @@ export class UserService {
     return user;
   }
 
-  async find(findUserDto: FindUserRequestDto) {
+  async find({ id }: { id: number }) {
     const [user] = await this.userRepository.find({
-      where: findUserDto,
+      where: { id },
     });
 
     if (!user) throw new UserNotFoundError();
@@ -50,9 +46,9 @@ export class UserService {
     return user;
   }
 
-  async findByEmail(findUserDto: FindUserByEmailRequestDto) {
+  async findByEmail({ email }: { email: string }) {
     const [user] = await this.userRepository.find({
-      where: { email: findUserDto.email },
+      where: { email },
     });
 
     if (!user) throw new UserNotFoundError();

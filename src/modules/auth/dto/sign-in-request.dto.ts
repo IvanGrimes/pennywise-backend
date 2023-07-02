@@ -1,10 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { FindUserByEmailRequestDto } from '@modules/user';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { PickType } from '@nestjs/swagger';
+import { SignUpRequestDto } from './sign-up-request.dto';
 
-export class SignInRequestDto extends FindUserByEmailRequestDto {
-  @ApiProperty({ description: 'The password of a user' })
-  @IsString()
-  @IsNotEmpty()
-  password!: string;
-}
+export class SignInRequestDto extends PickType(SignUpRequestDto, [
+  'email',
+  'password',
+]) {}

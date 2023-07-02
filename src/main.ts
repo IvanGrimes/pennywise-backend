@@ -10,14 +10,17 @@ import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    cors: { origin: 'http://localhost:5173', credentials: true },
+  });
   const reflector = app.get(Reflector);
   const configService = app.get(ConfigService);
   const options = new DocumentBuilder().build();
   const document = SwaggerModule.createDocument(app, options);
 
-  SwaggerModule.setup('docs', app, document);
-
+  SwaggerModule.setup('docs', app, document, {
+    jsonDocumentUrl: '/docs/schema.json',
+  });
   app.use(cookieParser(configService.get('COOKIE_SECRET')));
 
   app.useGlobalPipes(

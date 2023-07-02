@@ -37,8 +37,6 @@ export class RefreshTokenStrategy extends PassportStrategy(
   validate(req: RequestType, payload: JwtPayload) {
     const refreshToken = RefreshTokenStrategy.extract(req);
 
-    console.log(refreshToken, payload);
-
     if (!refreshToken)
       throw new UnauthorizedException('Refresh token not found');
 

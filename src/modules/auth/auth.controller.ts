@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -11,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 import {
   SignUpRequestDto,
@@ -19,8 +20,8 @@ import {
   SignInRequestDto,
   SignInResponseDto,
   RefreshTokenResponseDto,
-  RefreshTokenRequestDto,
   SignOutResponseDto,
+  UserResponseDto,
 } from './dto';
 import {
   RefreshTokenNotFoundOrExpired,
@@ -32,14 +33,17 @@ import {
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
 import { GetUser, GetUserId, Public } from '@lib/app/decorators';
+import { UserEntity } from '@modules/user/user.entity';
+import { JwtPayload } from '@modules/auth/auth.types';
 
 @Controller('/auth')
+@ApiTags('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/sign-up')
   @Public()
-  @ApiOperation({ summary: 'Sign up' })
+  @ApiOperation({ operationId: 'signUp', summary: 'Sign up' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     type: SignUpResponseDto,
@@ -77,7 +81,7 @@ export class AuthController {
   @Post('/sign-in')
   @HttpCode(HttpStatus.OK)
   @Public()
-  @ApiOperation({ summary: 'Sign in' })
+  @ApiOperation({ operationId: 'signIn', summary: 'Sign in' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SignInResponseDto,
@@ -105,7 +109,6 @@ export class AuthController {
         e instanceof UserNotFoundError ||
         e instanceof WrongCredentialsError
       ) {
-        console.log(e);
         throw new UnauthorizedException(WrongCredentialsError.message);
       }
 
@@ -113,8 +116,19 @@ export class AuthController {
     }
   }
 
+  @Get('/user')
+  @ApiOperation({ operationId: 'user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: UserResponseDto,
+  })
+  async user(@GetUser() user: JwtPayload) {
+    return new UserResponseDto(user);
+  }
+
   @UseGuards(RefreshTokenGuard)
   @Post('/refresh')
+  @ApiOperation({ operationId: 'refresh', summary: 'Refresh access token' })
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
     status: HttpStatus.OK,
@@ -131,9 +145,7 @@ export class AuthController {
     @GetUser('refreshToken') refreshToken: string,
   ) {
     try {
-      const result = await this.authService.refresh(
-        new RefreshTokenRequestDto({ userId, refreshToken }),
-      );
+      const result = await this.authService.refresh({ userId, refreshToken });
 
       this.setRefreshTokenCookie({
         response,
@@ -155,10 +167,11 @@ export class AuthController {
   }
 
   @Post('/sign-out')
+  @ApiOperation({ operationId: 'signOut', summary: 'Sign out' })
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
     status: HttpStatus.OK,
-    type: RefreshTokenResponseDto,
+    type: SignOutResponseDto,
   })
   async signOut(@GetUserId() userId: number) {
     await this.authService.signOut({ id: userId });
@@ -180,7 +193,9 @@ export class AuthController {
     response.cookie(refreshTokenCookie, refreshToken, {
       httpOnly: true,
       expires,
+      domain: 'localhost',
       signed: true,
+      sameSite: 'lax',
     });
   }
 }

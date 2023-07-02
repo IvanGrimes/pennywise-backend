@@ -14,6 +14,7 @@ export class EntityBase {
 
   @Column()
   @Generated('uuid')
+  @Exclude()
   public uuid!: string;
 
   @CreateDateColumn()

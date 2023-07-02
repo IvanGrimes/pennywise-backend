@@ -18,5 +18,6 @@ export class UserEntity extends EntityBase {
   password!: string;
 
   @Column({ nullable: true })
+  @Exclude()
   refreshToken!: string;
 }
