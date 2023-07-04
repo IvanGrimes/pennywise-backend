@@ -16,6 +16,6 @@ export class UserNotFoundError extends ExceptionBase {
   public readonly code = 'USER.NOT_FOUND';
 
   constructor(cause?: Error, metadata?: unknown) {
-    super(UserAlreadyExistsError.message, cause, metadata);
+    super(UserNotFoundError.message, cause, metadata);
   }
 }

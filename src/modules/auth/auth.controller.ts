@@ -2,7 +2,6 @@ import {
   Body,
   ConflictException,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -21,19 +20,16 @@ import {
   SignInResponseDto,
   RefreshTokenResponseDto,
   SignOutResponseDto,
-  UserResponseDto,
 } from './dto';
 import {
   RefreshTokenNotFoundOrExpired,
-  UserAlreadyExistsError,
-  UserNotFoundError,
   WrongCredentialsError,
   WrongRefreshToken,
 } from './auth.error';
+import { UserAlreadyExistsError, UserNotFoundError } from '@modules/user';
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
 import { GetUser, GetUserId, Public, Respond } from '@lib/app/decorators';
-import { JwtPayload } from '@modules/auth/auth.types';
 import { EmailVerificationService } from 'src/modules/email-verification';
 
 @Controller('/auth')
@@ -121,17 +117,6 @@ export class AuthController {
 
       throw e;
     }
-  }
-
-  @Get('/user')
-  @Respond(UserResponseDto)
-  @ApiOperation({ operationId: 'user' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    type: UserResponseDto,
-  })
-  async user(@GetUser() user: JwtPayload) {
-    return user;
   }
 
   @UseGuards(RefreshTokenGuard)

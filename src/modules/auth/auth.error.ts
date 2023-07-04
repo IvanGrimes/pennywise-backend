@@ -1,7 +1,5 @@
 import { ExceptionBase } from '@lib/exceptions';
 
-export { UserAlreadyExistsError, UserNotFoundError } from '@modules/user';
-
 export class WrongCredentialsError extends ExceptionBase {
   static readonly message = 'Wrong credentials';
 
