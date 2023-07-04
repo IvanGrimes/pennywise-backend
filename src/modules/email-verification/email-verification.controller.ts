@@ -9,23 +9,25 @@ import {
   Post,
 } from '@nestjs/common';
 import { EmailVerificationService } from './email-verification.service';
-import { VerifyRequestDto, VerifyResponseDto } from './dto';
+import { ResendResponseDto, VerifyRequestDto, VerifyResponseDto } from './dto';
 import {
   BadVerificationTokenError,
   EmailAlreadyVerifiedError,
   VerificationTokenExpiredError,
 } from './email-verification.errors';
-import { Respond } from '@lib/app/decorators';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { GetUserId, Public, Respond } from '@lib/app/decorators';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 
 @Controller('email-verification')
+@ApiTags('email-verification')
 export class EmailVerificationController {
   constructor(
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
   @Post('/verify')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Respond(VerifyResponseDto)
   @ApiOperation({ operationId: 'verify', summary: 'Verify email' })
@@ -51,7 +53,7 @@ export class EmailVerificationController {
         verifyRequestDto.token,
       );
 
-      await this.emailVerificationService.confirmEmail(email);
+      await this.emailVerificationService.verifyEmail(email);
 
       return { success: true };
     } catch (e) {
@@ -61,6 +63,28 @@ export class EmailVerificationController {
       if (e instanceof BadVerificationTokenError) {
         throw new BadRequestException(e.message);
       }
+      if (e instanceof EmailAlreadyVerifiedError) {
+        throw new ConflictException(e.message);
+      }
+
+      throw e;
+    }
+  }
+
+  @Post('/resend')
+  @HttpCode(HttpStatus.OK)
+  @Respond(ResendResponseDto)
+  @ApiOperation({ operationId: 'resend', summary: 'Resend verification link' })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    type: ApiErrorResponseDto,
+  })
+  async resend(@GetUserId() userId: number) {
+    try {
+      await this.emailVerificationService.resendVerificationLink(userId);
+
+      return { success: true };
+    } catch (e) {
       if (e instanceof EmailAlreadyVerifiedError) {
         throw new ConflictException(e.message);
       }

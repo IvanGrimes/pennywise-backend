@@ -11,6 +11,7 @@ import {
 import { RequestContextModule } from 'nestjs-request-context';
 import { AuthModule } from '@modules/auth';
 import { AccessTokenGuard } from '@lib/app/guards';
+import { EmailVerificationModule } from '@modules/email-verification';
 
 const interceptors = [
   {
@@ -54,6 +55,7 @@ const interceptors = [
     RequestContextModule,
     UserModule,
     AuthModule,
+    EmailVerificationModule,
   ],
   controllers: [],
   providers: [

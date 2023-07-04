@@ -42,7 +42,7 @@ export class EmailVerificationService {
     });
   }
 
-  async confirmEmail(email: string) {
+  async verifyEmail(email: string) {
     const user = await this.userService.findByEmail({ email });
 
     if (user.isEmailVerified) {
@@ -50,6 +50,16 @@ export class EmailVerificationService {
     }
 
     await this.userService.markEmailAsVerified(email);
+  }
+
+  async resendVerificationLink(userId: number) {
+    const user = await this.userService.find({ id: userId });
+
+    if (user.isEmailVerified) {
+      throw new EmailAlreadyVerifiedError();
+    }
+
+    await this.sendVerificationLink(user.email);
   }
 
   async decodeConfirmationToken(token: string) {
