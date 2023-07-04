@@ -20,4 +20,7 @@ export class UserEntity extends EntityBase {
   @Column({ nullable: true })
   @Exclude()
   refreshToken!: string;
+
+  @Column({ default: false })
+  isEmailVerified!: boolean;
 }

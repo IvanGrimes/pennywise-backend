@@ -77,6 +77,10 @@ export class UserService {
     );
   }
 
+  markEmailAsVerified(email: string) {
+    return this.userRepository.update({ email }, { isEmailVerified: true });
+  }
+
   verifyHashedValue(hashedValue: string, value: string) {
     return argon.verify(hashedValue, value);
   }

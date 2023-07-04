@@ -32,16 +32,20 @@ import {
 } from './auth.error';
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
-import { GetUser, GetUserId, Public } from '@lib/app/decorators';
-import { UserEntity } from '@modules/user/user.entity';
+import { GetUser, GetUserId, Public, Respond } from '@lib/app/decorators';
 import { JwtPayload } from '@modules/auth/auth.types';
+import { EmailVerificationService } from 'src/modules/email-verification';
 
 @Controller('/auth')
 @ApiTags('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly emailVerificationService: EmailVerificationService,
+  ) {}
 
   @Post('/sign-up')
+  @Respond(SignUpResponseDto)
   @Public()
   @ApiOperation({ operationId: 'signUp', summary: 'Sign up' })
   @ApiResponse({
@@ -63,12 +67,14 @@ export class AuthController {
     try {
       const result = await this.authService.signUp(signUpDto);
 
+      await this.emailVerificationService.sendVerificationLink(signUpDto.email);
+
       this.setRefreshTokenCookie({
         response,
         refreshToken: result.refreshToken,
       });
 
-      return new SignUpResponseDto(result);
+      return result;
     } catch (e) {
       if (e instanceof UserAlreadyExistsError) {
         throw new ConflictException(e.message);
@@ -80,6 +86,7 @@ export class AuthController {
 
   @Post('/sign-in')
   @HttpCode(HttpStatus.OK)
+  @Respond(SignInResponseDto)
   @Public()
   @ApiOperation({ operationId: 'signIn', summary: 'Sign in' })
   @ApiResponse({
@@ -103,7 +110,7 @@ export class AuthController {
         refreshToken: result.refreshToken,
       });
 
-      return new SignInResponseDto(result);
+      return result;
     } catch (e) {
       if (
         e instanceof UserNotFoundError ||
@@ -117,17 +124,19 @@ export class AuthController {
   }
 
   @Get('/user')
+  @Respond(UserResponseDto)
   @ApiOperation({ operationId: 'user' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: UserResponseDto,
   })
   async user(@GetUser() user: JwtPayload) {
-    return new UserResponseDto(user);
+    return user;
   }
 
   @UseGuards(RefreshTokenGuard)
   @Post('/refresh')
+  @Respond(RefreshTokenResponseDto)
   @ApiOperation({ operationId: 'refresh', summary: 'Refresh access token' })
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
@@ -152,7 +161,7 @@ export class AuthController {
         refreshToken: result.refreshToken,
       });
 
-      return new RefreshTokenResponseDto(result);
+      return result;
     } catch (e) {
       if (
         e instanceof UserNotFoundError ||
@@ -176,7 +185,7 @@ export class AuthController {
   async signOut(@GetUserId() userId: number) {
     await this.authService.signOut({ id: userId });
 
-    return new SignOutResponseDto({ success: true });
+    return { success: true };
   }
 
   private setRefreshTokenCookie({

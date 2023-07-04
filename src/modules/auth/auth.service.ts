@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserService } from '@modules/user';
+import { UserService, UserEntity } from '@modules/user';
 import { SignUpRequestDto, SignInRequestDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -10,7 +10,6 @@ import {
   WrongRefreshToken,
 } from './auth.error';
 import * as argon from 'argon2';
-import { UserEntity } from '@modules/user/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -97,11 +96,11 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
         secret: this.configService.get('ACCESS_TOKEN_SECRET'),
-        expiresIn: '15m',
+        expiresIn: this.configService.get('ACCESS_TOKEN_EXPIRATION_TIME'),
       }),
       this.jwtService.signAsync(jwtPayload, {
         secret: this.configService.get('REFRESH_TOKEN_SECRET'),
-        expiresIn: '7d',
+        expiresIn: this.configService.get('REFRESH_TOKEN_EXPIRATION_TIME'),
       }),
     ]);
 
