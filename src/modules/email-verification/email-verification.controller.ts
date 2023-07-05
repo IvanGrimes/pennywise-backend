@@ -27,7 +27,6 @@ export class EmailVerificationController {
   ) {}
 
   @Post('/verify')
-  @Public()
   @HttpCode(HttpStatus.OK)
   @Respond(VerifyResponseDto)
   @ApiOperation({ operationId: 'verify', summary: 'Verify email' })

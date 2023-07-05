@@ -13,4 +13,8 @@ export class MeResponseDto {
   @ApiProperty()
   @Expose()
   email!: string;
+
+  @ApiProperty()
+  @Expose()
+  isEmailVerified!: boolean;
 }
