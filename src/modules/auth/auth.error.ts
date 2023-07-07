@@ -10,22 +10,22 @@ export class WrongCredentialsError extends ExceptionBase {
   }
 }
 
-export class RefreshTokenNotFoundOrExpired extends ExceptionBase {
+export class RefreshTokenNotFoundOrExpiredError extends ExceptionBase {
   static readonly message = 'Refresh token not found or expired';
 
   public readonly code = 'AUTH.REFRESH_TOKEN_NOT_FOUND_OR_EXPIRED';
 
   constructor(cause?: Error, metadata?: unknown) {
-    super(RefreshTokenNotFoundOrExpired.message, cause, metadata);
+    super(RefreshTokenNotFoundOrExpiredError.message, cause, metadata);
   }
 }
 
-export class WrongRefreshToken extends ExceptionBase {
+export class WrongRefreshTokenError extends ExceptionBase {
   static readonly message = 'Wrong refresh token';
 
   public readonly code = 'AUTH.WRONG_REFRESH_TOKEN';
 
   constructor(cause?: Error, metadata?: unknown) {
-    super(WrongRefreshToken.message, cause, metadata);
+    super(WrongRefreshTokenError.message, cause, metadata);
   }
 }

@@ -5,11 +5,13 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
@@ -21,19 +23,17 @@ import {
   RefreshTokenResponseDto,
   SignOutResponseDto,
 } from './dto';
-import {
-  RefreshTokenNotFoundOrExpired,
-  WrongCredentialsError,
-  WrongRefreshToken,
-} from './auth.error';
+import { WrongCredentialsError, WrongRefreshTokenError } from './auth.error';
 import { UserAlreadyExistsError, UserNotFoundError } from '@modules/user';
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
 import { GetUser, GetUserId, Public, Respond } from '@lib/app/decorators';
-import { EmailVerificationService } from 'src/modules/email-verification';
+import { EmailVerificationService } from '@modules/email-verification';
+import { SessionInterceptor, SessionNotFoundError } from '@modules/session';
 
 @Controller('/auth')
 @ApiTags('auth')
+@UseInterceptors(SessionInterceptor)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -97,6 +97,7 @@ export class AuthController {
   async signIn(
     @Body() signInDto: SignInRequestDto,
     @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
   ) {
     try {
       const result = await this.authService.signIn(signInDto);
@@ -134,26 +135,29 @@ export class AuthController {
   })
   @Public()
   async refresh(
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
     @GetUserId() userId: number,
     @GetUser('refreshToken') refreshToken: string,
   ) {
     try {
-      const result = await this.authService.refresh({ userId, refreshToken });
-
-      this.setRefreshTokenCookie({
-        response,
-        refreshToken: result.refreshToken,
+      const { accessToken } = await this.authService.refresh({
+        userId,
+        accessToken:
+          request.headers.authorization?.split?.('Bearer ')?.[1] ?? '',
+        refreshToken,
       });
 
-      return result;
+      return { accessToken };
     } catch (e) {
-      if (
-        e instanceof UserNotFoundError ||
-        e instanceof RefreshTokenNotFoundOrExpired ||
-        e instanceof WrongRefreshToken
-      ) {
-        throw new UnauthorizedException(RefreshTokenNotFoundOrExpired.message);
+      if (e instanceof UserNotFoundError) {
+        throw new UnauthorizedException(UserNotFoundError.message);
+      }
+      if (e instanceof WrongRefreshTokenError) {
+        throw new UnauthorizedException(WrongRefreshTokenError.message);
+      }
+      if (e instanceof SessionNotFoundError) {
+        throw new UnauthorizedException(SessionNotFoundError.message);
       }
 
       throw e;
@@ -167,8 +171,11 @@ export class AuthController {
     status: HttpStatus.OK,
     type: SignOutResponseDto,
   })
-  async signOut(@GetUserId() userId: number) {
-    await this.authService.signOut({ id: userId });
+  @Public()
+  async signOut(@Req() request: Request) {
+    await this.authService.signOut({
+      accessToken: request.headers.authorization?.split('Bearer ')?.[1] ?? '',
+    });
 
     return { success: true };
   }

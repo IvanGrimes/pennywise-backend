@@ -12,6 +12,7 @@ import { RequestContextModule } from 'nestjs-request-context';
 import { AuthModule } from '@modules/auth';
 import { AccessTokenGuard } from '@lib/app/guards';
 import { EmailVerificationModule } from '@modules/email-verification';
+import { ClsModule } from 'nestjs-cls';
 
 const interceptors = [
   {
@@ -26,6 +27,7 @@ const interceptors = [
 
 @Module({
   imports: [
+    ClsModule.forRoot({ global: true, middleware: { mount: true } }),
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({

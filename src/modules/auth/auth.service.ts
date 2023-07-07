@@ -4,12 +4,8 @@ import { SignUpRequestDto, SignInRequestDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './auth.types';
-import {
-  RefreshTokenNotFoundOrExpired,
-  WrongCredentialsError,
-  WrongRefreshToken,
-} from './auth.error';
-import * as argon from 'argon2';
+import { WrongCredentialsError, WrongRefreshTokenError } from './auth.error';
+import { SessionService } from '@modules/session';
 
 @Injectable()
 export class AuthService {
@@ -17,19 +13,15 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly sessionService: SessionService,
   ) {}
 
   async signUp(signUpDto: SignUpRequestDto) {
-    const user = await this.userService.create({
-      ...signUpDto,
-      password: await argon.hash(signUpDto.password),
-    });
+    const user = await this.userService.create(signUpDto);
     const tokens = await this.getTokens(user);
+    const session = await this.sessionService.create(tokens);
 
-    await this.userService.updateRefreshToken({
-      id: user.id,
-      refreshToken: tokens.refreshToken,
-    });
+    await this.userService.saveSession({ id: user.id, session });
 
     return tokens;
   }
@@ -44,10 +36,11 @@ export class AuthService {
     if (!passwordMatches) throw new WrongCredentialsError();
 
     const tokens = await this.getTokens(user);
+    const session = await this.sessionService.create(tokens);
 
-    await this.userService.updateRefreshToken({
+    await this.userService.saveSession({
       id: user.id,
-      refreshToken: tokens.refreshToken,
+      session,
     });
 
     return tokens;
@@ -55,35 +48,34 @@ export class AuthService {
 
   async refresh({
     userId,
+    accessToken,
     refreshToken,
   }: {
     userId: number;
+    accessToken: string;
     refreshToken: string;
   }) {
-    const user = await this.userService.find({ id: userId });
+    const session = await this.sessionService.find({
+      userId,
+      accessToken,
+    });
 
-    if (!user.refreshToken || !refreshToken)
-      throw new RefreshTokenNotFoundOrExpired();
+    if (session.refreshToken !== refreshToken)
+      throw new WrongRefreshTokenError();
 
-    const refreshTokenMatches = await this.userService.verifyHashedValue(
-      user.refreshToken,
-      refreshToken,
-    );
-
-    if (!refreshTokenMatches) throw new WrongRefreshToken();
-
+    const user = await this.userService.find({ id: session.user.id });
     const tokens = await this.getTokens(user);
 
-    await this.userService.updateRefreshToken({
-      id: user.id,
-      refreshToken: tokens.refreshToken,
+    await this.sessionService.update({
+      id: session.id,
+      accessToken: tokens.accessToken,
     });
 
     return tokens;
   }
 
-  async signOut({ id }: { id: number }) {
-    await this.userService.removeRefreshToken({ id });
+  async signOut({ accessToken }: { accessToken: string }) {
+    await this.sessionService.revoke({ accessToken });
   }
 
   private async getTokens({ id, email, firstName, lastName }: UserEntity) {
@@ -93,6 +85,7 @@ export class AuthService {
       firstName,
       lastName,
     };
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
         secret: this.configService.get('ACCESS_TOKEN_SECRET'),

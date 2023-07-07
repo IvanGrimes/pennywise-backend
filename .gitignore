@@ -7,3 +7,4 @@ temp/
 pgdata/
 dist/
 .env
+.DS_STORE

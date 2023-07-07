@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AccessTokenStrategy, RefreshTokenStrategy } from './strategies';
 import { PassportModule } from '@nestjs/passport';
 import { EmailVerificationModule } from 'src/modules/email-verification';
+import { SessionModule } from '@modules/session';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { EmailVerificationModule } from 'src/modules/email-verification';
     JwtModule.register({}),
     PassportModule,
     EmailVerificationModule,
+    SessionModule,
   ],
   providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
   controllers: [AuthController],

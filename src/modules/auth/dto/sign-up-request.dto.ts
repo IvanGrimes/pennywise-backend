@@ -41,7 +41,6 @@ export class SignUpRequestDto implements CreateUserRequestDto {
     {
       message: (args) => {
         const constraints = args.constraints[0];
-        console.log(constraints);
 
         const uppercaseLetters = args.value.match(/[A-Z]/g)?.length ?? 0;
 
