@@ -60,7 +60,7 @@ export class AuthService {
       accessToken,
     });
 
-    if (session.refreshToken !== refreshToken)
+    if (session.refreshToken !== refreshToken || !session.isRevoked)
       throw new WrongRefreshTokenError();
 
     const user = await this.userService.find({ id: session.user.id });
@@ -75,7 +75,7 @@ export class AuthService {
   }
 
   async signOut({ accessToken }: { accessToken: string }) {
-    await this.sessionService.revoke({ accessToken });
+    await this.sessionService.revokeByAccessToken(accessToken);
   }
 
   private async getTokens({ id, email, firstName, lastName }: UserEntity) {

@@ -9,19 +9,18 @@ import { Exclude } from 'class-transformer';
 
 export class EntityBase {
   @PrimaryGeneratedColumn()
-  @Exclude()
-  public id!: number;
+  id!: number;
 
   @Column()
   @Generated('uuid')
   @Exclude()
-  public uuid!: string;
+  uuid!: string;
 
   @CreateDateColumn()
   @Exclude()
-  public createdAt!: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
   @Exclude()
-  public updatedAt!: Date;
+  updatedAt!: Date;
 }

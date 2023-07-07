@@ -27,7 +27,13 @@ import { WrongCredentialsError, WrongRefreshTokenError } from './auth.error';
 import { UserAlreadyExistsError, UserNotFoundError } from '@modules/user';
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
-import { GetUser, GetUserId, Public, Respond } from '@lib/app/decorators';
+import {
+  FromUser,
+  UserId,
+  Public,
+  Respond,
+  AccessToken,
+} from '@lib/app/decorators';
 import { EmailVerificationService } from '@modules/email-verification';
 import { SessionInterceptor, SessionNotFoundError } from '@modules/session';
 
@@ -137,18 +143,18 @@ export class AuthController {
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-    @GetUserId() userId: number,
-    @GetUser('refreshToken') refreshToken: string,
+    @UserId() userId: number,
+    @FromUser('refreshToken') refreshToken: string,
+    @AccessToken() accessToken: string,
   ) {
     try {
-      const { accessToken } = await this.authService.refresh({
+      const result = await this.authService.refresh({
         userId,
-        accessToken:
-          request.headers.authorization?.split?.('Bearer ')?.[1] ?? '',
+        accessToken,
         refreshToken,
       });
 
-      return { accessToken };
+      return { accessToken: result.accessToken };
     } catch (e) {
       if (e instanceof UserNotFoundError) {
         throw new UnauthorizedException(UserNotFoundError.message);
@@ -172,10 +178,8 @@ export class AuthController {
     type: SignOutResponseDto,
   })
   @Public()
-  async signOut(@Req() request: Request) {
-    await this.authService.signOut({
-      accessToken: request.headers.authorization?.split('Bearer ')?.[1] ?? '',
-    });
+  async signOut(@AccessToken() accessToken: string) {
+    await this.authService.signOut({ accessToken });
 
     return { success: true };
   }

@@ -15,7 +15,7 @@ import {
   EmailAlreadyVerifiedError,
   VerificationTokenExpiredError,
 } from './email-verification.errors';
-import { GetUserId, Public, Respond } from '@lib/app/decorators';
+import { UserId, Public, Respond } from '@lib/app/decorators';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 
@@ -78,7 +78,7 @@ export class EmailVerificationController {
     status: HttpStatus.CONFLICT,
     type: ApiErrorResponseDto,
   })
-  async resend(@GetUserId() userId: number) {
+  async resend(@UserId() userId: number) {
     try {
       await this.emailVerificationService.resendVerificationLink(userId);
 

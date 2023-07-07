@@ -20,12 +20,11 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(req: Request, payload: JwtPayload) {
-    const [, accessToken = ''] =
-      req.headers.authorization?.split('Bearer ') ?? [];
+    const accessToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req) ?? '';
     try {
       const session = await this.sessionService.find({
-        userId: payload.sub,
         accessToken,
+        userId: payload.sub,
       });
 
       if (session.isRevoked) {

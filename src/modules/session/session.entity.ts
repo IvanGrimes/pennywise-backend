@@ -1,14 +1,23 @@
 import { EntityBase } from '@src/lib/entity.base';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import type { UserEntity } from '@modules/user';
+import { Exclude } from 'class-transformer';
 
 @Entity({ name: 'sessions' })
 export class SessionEntity extends EntityBase {
   @Column()
+  @Exclude()
   accessToken!: string;
 
   @Column()
+  @Exclude()
   refreshToken!: string;
+
+  @Column({ nullable: true })
+  browserName!: string;
+
+  @Column({ nullable: true })
+  browserVersion!: string;
 
   @Column({ nullable: true })
   deviceType!: string;
@@ -28,6 +37,7 @@ export class SessionEntity extends EntityBase {
   @Column()
   isRevoked!: boolean;
 
+  @Exclude()
   @ManyToOne('UserEntity', (user: UserEntity) => user.sessions)
   @JoinColumn()
   user!: UserEntity;

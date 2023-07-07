@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { GetUserId, Respond } from '@lib/app/decorators';
+import { UserId, Respond } from '@lib/app/decorators';
 import { MeResponseDto } from './dto';
 import { UserNotFoundError } from './user.errors';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
@@ -27,7 +27,7 @@ export class UserController {
     status: HttpStatus.UNAUTHORIZED,
     type: ApiErrorResponseDto,
   })
-  async me(@GetUserId() userId: number) {
+  async me(@UserId() userId: number) {
     try {
       return this.userService.find({ id: userId });
     } catch (e) {

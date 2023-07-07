@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { SessionEntity } from './session.entity';
 import { sessionRepositoryDi } from './session.di';
 import { SessionNotFoundError } from './session.error';
 import { ClsService } from 'nestjs-cls';
-import { SessionInformation } from '@modules/session/session.interceptor';
+import { SessionInformation } from './session.interceptor';
+import { TerminateRequestDto } from './dto';
 
 @Injectable()
 export class SessionService {
@@ -27,6 +28,8 @@ export class SessionService {
     const session = this.sessionRepository.create({
       accessToken,
       refreshToken,
+      browserName: sessionInformation.device.client?.name,
+      browserVersion: sessionInformation.device.client?.version,
       deviceType: sessionInformation.device.device?.type,
       deviceBrand: sessionInformation.device.device?.brand,
       deviceOs: sessionInformation.device.os?.name,
@@ -40,10 +43,10 @@ export class SessionService {
     return session;
   }
 
-  async find({ accessToken }: { userId: number; accessToken: string }) {
+  async find({ accessToken, userId }: { userId: number; accessToken: string }) {
     const session = await this.sessionRepository.findOne({
       relations: { user: true },
-      where: { accessToken },
+      where: { user: { id: userId }, accessToken },
     });
 
     if (!session) {
@@ -53,8 +56,39 @@ export class SessionService {
     return session;
   }
 
-  revoke({ accessToken }: { accessToken: string }) {
-    return this.sessionRepository.delete({ accessToken: accessToken });
+  findAll(userId: number) {
+    try {
+      return this.sessionRepository.find({
+        relations: { user: true },
+        where: { user: { id: userId } },
+      });
+    } catch (e) {
+      throw new SessionNotFoundError();
+    }
+  }
+
+  revoke({ id }: TerminateRequestDto) {
+    return this.sessionRepository.update({ id }, { isRevoked: true });
+  }
+
+  revokeByAccessToken(accessToken: string) {
+    return this.sessionRepository.update({ accessToken }, { isRevoked: true });
+  }
+
+  revokeAllOther({
+    userId,
+    accessToken,
+  }: {
+    userId: number;
+    accessToken: string;
+  }) {
+    return this.sessionRepository.update(
+      {
+        user: { id: userId },
+        accessToken: Not(accessToken),
+      },
+      { isRevoked: true },
+    );
   }
 
   update({ id, accessToken }: { id: number; accessToken: string }) {
