@@ -19,7 +19,10 @@ export class EmailService {
     });
   }
 
-  send(options: Mail.Options) {
-    return this.transport.sendMail(options);
+  send(options: Omit<Mail.Options, 'from'>) {
+    return this.transport.sendMail({
+      from: this.configService.get('EMAIL_USER'),
+      ...options,
+    });
   }
 }

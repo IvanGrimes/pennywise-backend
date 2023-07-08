@@ -18,12 +18,11 @@ export class UserEntity extends EntityBase {
   @Exclude()
   password!: string;
 
-  @Column({ nullable: true })
-  @Exclude()
-  refreshToken!: string;
-
   @Column({ default: false })
   isEmailVerified!: boolean;
+
+  @Column({ nullable: true })
+  resetPasswordToken?: string;
 
   @OneToMany('SessionEntity', (session: SessionEntity) => session.user, {
     cascade: true,

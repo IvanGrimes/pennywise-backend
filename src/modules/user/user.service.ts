@@ -18,9 +18,7 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserRequestDto) {
-    const exist = await this.userRepository.exist({
-      where: { email: createUserDto.email },
-    });
+    const exist = await this.existByEmail(createUserDto.email);
 
     if (exist) {
       throw new UserAlreadyExistsError();
@@ -68,7 +66,40 @@ export class UserService {
   }
 
   markEmailAsVerified(email: string) {
+    const exist = this.existByEmail(email);
+
+    if (!exist) throw new UserNotFoundError();
+
     return this.userRepository.update({ email }, { isEmailVerified: true });
+  }
+
+  async setResetPasswordToken({
+    email,
+    token,
+  }: {
+    email: string;
+    token: string;
+  }) {
+    const exist = this.existByEmail(email);
+
+    if (!exist) throw new UserNotFoundError();
+
+    return this.userRepository.update({ email }, { resetPasswordToken: token });
+  }
+
+  existByEmail(email: string) {
+    return this.userRepository.exist({ where: { email } });
+  }
+
+  setPassword({ email, password }: { email: string; password: string }) {
+    const exist = this.existByEmail(email);
+
+    if (!exist) throw new UserNotFoundError();
+
+    return this.userRepository.update(
+      { email },
+      { password, resetPasswordToken: undefined },
+    );
   }
 
   verifyHashedValue(hashedValue: string, value: string) {

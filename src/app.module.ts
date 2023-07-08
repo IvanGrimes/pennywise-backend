@@ -13,6 +13,7 @@ import { AuthModule } from '@modules/auth';
 import { AccessTokenGuard } from '@lib/app/guards';
 import { EmailVerificationModule } from '@modules/email-verification';
 import { ClsModule } from 'nestjs-cls';
+import { ResetPasswordModule } from '@modules/reset-password';
 
 const interceptors = [
   {
@@ -43,21 +44,25 @@ const interceptors = [
         ACCESS_TOKEN_SECRET: Joi.string().required(),
         REFRESH_TOKEN_SECRET: Joi.string().required(),
         VERIFICATION_TOKEN_SECRET: Joi.string().required(),
+        RESET_PASSWORD_TOKEN_SECRET: Joi.string().required(),
         COOKIE_SECRET: Joi.string().required(),
         EMAIL_USER: Joi.string().required(),
         EMAIL_PASSWORD: Joi.string().required(),
         EMAIL_HOST: Joi.string().required(),
         EMAIL_PORT: Joi.string().required(),
         EMAIL_CONFIRMATION_URL: Joi.string().required(),
+        SET_PASSWORD_URL: Joi.string().required(),
         ACCESS_TOKEN_EXPIRATION_TIME: Joi.string().required(),
         REFRESH_TOKEN_EXPIRATION_TIME: Joi.string().required(),
         VERIFICATION_TOKEN_EXPIRATION_TIME: Joi.string().required(),
+        RESET_PASSWORD_TOKEN_EXPIRATION_TIME: Joi.string().required(),
       }),
     }),
     RequestContextModule,
     UserModule,
     AuthModule,
     EmailVerificationModule,
+    ResetPasswordModule,
   ],
   controllers: [],
   providers: [

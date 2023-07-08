@@ -9,6 +9,7 @@ import {
   VerificationTokenExpiredError,
 } from './email-verification.errors';
 import { UserService } from '@modules/user';
+import { VerifyRequestDto } from './dto';
 
 @Injectable()
 export class EmailVerificationService {
@@ -35,14 +36,14 @@ export class EmailVerificationService {
     const text = `Welcome to the application. To confirm the email address, click here: ${url}`;
 
     return this.emailService.send({
-      from: this.configService.get('EMAIL_USER'),
       to: email,
       subject: 'Email confirmation',
       text,
     });
   }
 
-  async verifyEmail(email: string) {
+  async verifyEmail(verifyDto: VerifyRequestDto) {
+    const { email } = await this.decodeConfirmationToken(verifyDto.token);
     const user = await this.userService.findByEmail({ email });
 
     if (user.isEmailVerified) {
@@ -62,16 +63,11 @@ export class EmailVerificationService {
     await this.sendVerificationLink(user.email);
   }
 
-  async decodeConfirmationToken(token: string) {
+  private decodeConfirmationToken(token: string) {
     try {
-      const payload = await this.jwtService.verify<VerificationTokenPayload>(
-        token,
-        {
-          secret: this.verificationTokenSecret,
-        },
-      );
-
-      return payload.email;
+      return this.jwtService.verify<VerificationTokenPayload>(token, {
+        secret: this.verificationTokenSecret,
+      });
     } catch (error) {
       if (error instanceof Error && error?.name === 'TokenExpiredError') {
         throw new VerificationTokenExpiredError();
