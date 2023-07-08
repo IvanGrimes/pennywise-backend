@@ -36,14 +36,17 @@ export class EmailVerificationController {
   })
   @ApiResponse({
     status: HttpStatus.GONE,
+    description: VerificationTokenExpiredError.message,
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
+    description: BadVerificationTokenError.message,
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
+    description: EmailAlreadyVerifiedError.message,
     type: ApiErrorResponseDto,
   })
   async verify(@Body() verifyRequestDto: VerifyRequestDto) {

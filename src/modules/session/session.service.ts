@@ -57,14 +57,10 @@ export class SessionService {
   }
 
   findAll(userId: number) {
-    try {
-      return this.sessionRepository.find({
-        relations: { user: true },
-        where: { user: { id: userId } },
-      });
-    } catch (e) {
-      throw new SessionNotFoundError();
-    }
+    return this.sessionRepository.find({
+      relations: { user: true },
+      where: { user: { id: userId } },
+    });
   }
 
   revoke({ id }: TerminateRequestDto) {

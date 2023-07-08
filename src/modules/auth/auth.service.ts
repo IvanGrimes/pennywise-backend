@@ -60,7 +60,7 @@ export class AuthService {
       accessToken,
     });
 
-    if (session.refreshToken !== refreshToken || !session.isRevoked)
+    if (session.refreshToken !== refreshToken || session.isRevoked)
       throw new WrongRefreshTokenError();
 
     const user = await this.userService.find({ id: session.user.id });

@@ -1,8 +1,6 @@
 import { Controller, Get, HttpStatus, Post, Body } from '@nestjs/common';
 import { UserId, Respond, AccessToken } from '@lib/app/decorators';
 import { SessionService } from './session.service';
-import { SessionNotFoundError } from './session.error';
-import { NotFoundException } from '@lib/exceptions';
 import {
   AllResponseDto,
   TerminateRequestDto,
@@ -10,7 +8,6 @@ import {
   TerminateAllResponseDto,
 } from './dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 
 @Controller('session')
 @ApiTags('session')
@@ -22,36 +19,30 @@ export class SessionController {
   @ApiOperation({ operationId: 'all' })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: AllResponseDto,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    type: ApiErrorResponseDto,
+    type: [AllResponseDto],
   })
   async getSessions(
     @UserId() userId: number,
     @AccessToken() accessToken: string,
   ) {
-    try {
-      const result = await this.sessionService.findAll(userId);
+    const result = await this.sessionService.findAll(userId);
 
-      return result
-        .filter((item) => !item.isRevoked)
-        .map<AllResponseDto>((item) => ({
-          ...item,
-          isCurrent: item.accessToken === accessToken,
-        }));
-    } catch (e) {
-      if (e instanceof SessionNotFoundError) {
-        throw new NotFoundException(SessionNotFoundError.message);
-      }
-
-      throw e;
-    }
+    return result
+      .filter((item) => !item.isRevoked)
+      .map<AllResponseDto>((item) => ({
+        ...item,
+        isCurrent: item.accessToken === accessToken,
+      }))
+      .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+      .sort((a, b) => (a.isCurrent > b.isCurrent ? -1 : 1));
   }
 
   @Post('terminate')
   @ApiOperation({ operationId: 'terminate' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: TerminateResponseDto,
+  })
   @Respond(TerminateResponseDto)
   async terminateSession(@Body() terminateDto: TerminateRequestDto) {
     await this.sessionService.revoke(terminateDto);
@@ -61,6 +52,10 @@ export class SessionController {
 
   @Post('terminate-all')
   @ApiOperation({ operationId: 'terminateAll' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: TerminateResponseDto,
+  })
   @Respond(TerminateAllResponseDto)
   async terminateAllSessions(
     @UserId() userId: number,
