@@ -23,7 +23,11 @@ import {
   RefreshTokenResponseDto,
   SignOutResponseDto,
 } from './dto';
-import { WrongCredentialsError, WrongRefreshTokenError } from './auth.error';
+import {
+  RefreshTokenNotFoundError,
+  WrongCredentialsError,
+  WrongRefreshTokenError,
+} from './auth.error';
 import { UserAlreadyExistsError, UserNotFoundError } from '@modules/user';
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
@@ -71,10 +75,12 @@ export class AuthController {
 
       await this.emailVerificationService.sendVerificationLink(signUpDto.email);
 
-      this.setRefreshTokenCookie({
-        response,
-        refreshToken: result.refreshToken,
-      });
+      if (result.refreshToken) {
+        this.setRefreshTokenCookie({
+          response,
+          refreshToken: result.refreshToken,
+        });
+      }
 
       return result;
     } catch (e) {
@@ -108,10 +114,12 @@ export class AuthController {
     try {
       const result = await this.authService.signIn(signInDto);
 
-      this.setRefreshTokenCookie({
-        response,
-        refreshToken: result.refreshToken,
-      });
+      if (result.refreshToken) {
+        this.setRefreshTokenCookie({
+          response,
+          refreshToken: result.refreshToken,
+        });
+      }
 
       return result;
     } catch (e) {
@@ -154,7 +162,7 @@ export class AuthController {
         refreshToken,
       });
 
-      return { accessToken: result.accessToken };
+      return result;
     } catch (e) {
       if (e instanceof UserNotFoundError) {
         throw new UnauthorizedException(UserNotFoundError.message);
@@ -164,6 +172,9 @@ export class AuthController {
       }
       if (e instanceof SessionNotFoundError) {
         throw new UnauthorizedException(SessionNotFoundError.message);
+      }
+      if (e instanceof RefreshTokenNotFoundError) {
+        throw new UnauthorizedException(RefreshTokenNotFoundError.message);
       }
 
       throw e;

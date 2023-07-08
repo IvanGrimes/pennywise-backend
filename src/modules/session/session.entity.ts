@@ -9,7 +9,7 @@ export class SessionEntity extends EntityBase {
   @Exclude()
   accessToken!: string;
 
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
   refreshToken!: string;
 

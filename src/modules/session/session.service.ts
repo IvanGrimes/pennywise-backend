@@ -20,7 +20,7 @@ export class SessionService {
     refreshToken,
   }: {
     accessToken: string;
-    refreshToken: string;
+    refreshToken?: string;
   }) {
     const sessionInformation: SessionInformation =
       this.clsService.get('sessionInformation');

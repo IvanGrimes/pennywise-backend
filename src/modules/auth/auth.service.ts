@@ -4,7 +4,11 @@ import { SignUpRequestDto, SignInRequestDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './auth.types';
-import { WrongCredentialsError, WrongRefreshTokenError } from './auth.error';
+import {
+  RefreshTokenNotFoundError,
+  WrongCredentialsError,
+  WrongRefreshTokenError,
+} from './auth.error';
 import { SessionService } from '@modules/session';
 
 @Injectable()
@@ -35,7 +39,7 @@ export class AuthService {
 
     if (!passwordMatches) throw new WrongCredentialsError();
 
-    const tokens = await this.getTokens(user);
+    const tokens = await this.getTokens(user, signInDto.remember);
     const session = await this.sessionService.create(tokens);
 
     await this.userService.saveSession({
@@ -60,6 +64,7 @@ export class AuthService {
       accessToken,
     });
 
+    if (!session.refreshToken) throw new RefreshTokenNotFoundError();
     if (session.refreshToken !== refreshToken || session.isRevoked)
       throw new WrongRefreshTokenError();
 
@@ -78,7 +83,10 @@ export class AuthService {
     await this.sessionService.revokeByAccessToken(accessToken);
   }
 
-  private async getTokens({ id, email, firstName, lastName }: UserEntity) {
+  private async getTokens(
+    { id, email, firstName, lastName }: UserEntity,
+    createRefreshToken = true,
+  ) {
     const jwtPayload: JwtPayload = {
       sub: id,
       email,
@@ -91,10 +99,12 @@ export class AuthService {
         secret: this.configService.get('ACCESS_TOKEN_SECRET'),
         expiresIn: this.configService.get('ACCESS_TOKEN_EXPIRATION_TIME'),
       }),
-      this.jwtService.signAsync(jwtPayload, {
-        secret: this.configService.get('REFRESH_TOKEN_SECRET'),
-        expiresIn: this.configService.get('REFRESH_TOKEN_EXPIRATION_TIME'),
-      }),
+      createRefreshToken
+        ? this.jwtService.signAsync(jwtPayload, {
+            secret: this.configService.get('REFRESH_TOKEN_SECRET'),
+            expiresIn: this.configService.get('REFRESH_TOKEN_EXPIRATION_TIME'),
+          })
+        : Promise.resolve(undefined),
     ]);
 
     return {

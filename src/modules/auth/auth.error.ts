@@ -10,6 +10,16 @@ export class WrongCredentialsError extends ExceptionBase {
   }
 }
 
+export class RefreshTokenNotFoundError extends ExceptionBase {
+  static readonly message = 'Refresh token not found';
+
+  public readonly code = 'AUTH.REFRESH_TOKEN_NOT_FOUND';
+
+  constructor(cause?: Error, metadata?: unknown) {
+    super(RefreshTokenNotFoundError.message, cause, metadata);
+  }
+}
+
 export class WrongRefreshTokenError extends ExceptionBase {
   static readonly message = 'Wrong refresh token';
 
