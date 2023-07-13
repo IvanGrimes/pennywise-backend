@@ -29,3 +29,13 @@ export class ResetPasswordTokenNotFoundError extends ExceptionBase {
     super(ResetPasswordTokenNotFoundError.message, cause, metadata);
   }
 }
+
+export class NewPasswordMustBeDifferent extends ExceptionBase {
+  static readonly message = 'The new password must not be the current one.';
+
+  public readonly code = 'RESET_PASSWORD.NEW_PASSWORD_MUST_BE_DIFFERENT';
+
+  constructor(cause?: Error, metadata?: unknown) {
+    super(NewPasswordMustBeDifferent.message, cause, metadata);
+  }
+}

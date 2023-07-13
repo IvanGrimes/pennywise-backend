@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { ResetPasswordRequestDto, SetPasswordRequestDto } from './dto';
 import {
   BadResetPasswordTokenError,
+  NewPasswordMustBeDifferent,
   ResetPasswordTokenExpiredError,
 } from './reset-password.errors';
 
@@ -43,6 +44,22 @@ export class ResetPasswordService {
 
   async setPassword({ token, password }: SetPasswordRequestDto) {
     const { email } = await this.decodeResetPasswordToken(token);
+    const user = await this.userService.findByEmail({ email });
+
+    const tokenMatches = user.resetPasswordToken === token;
+
+    if (!tokenMatches) {
+      throw new BadResetPasswordTokenError();
+    }
+
+    const isPasswordHashEqual = await this.userService.verifyHashedValue(
+      user.password,
+      password,
+    );
+
+    if (isPasswordHashEqual) {
+      throw new NewPasswordMustBeDifferent();
+    }
 
     return this.userService.setPassword({ email, password });
   }

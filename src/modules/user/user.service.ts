@@ -91,14 +91,12 @@ export class UserService {
     return this.userRepository.exist({ where: { email } });
   }
 
-  setPassword({ email, password }: { email: string; password: string }) {
-    const exist = this.existByEmail(email);
-
-    if (!exist) throw new UserNotFoundError();
+  async setPassword({ email, password }: { email: string; password: string }) {
+    const hashedPassword = await this.hash(password);
 
     return this.userRepository.update(
       { email },
-      { password, resetPasswordToken: undefined },
+      { password: hashedPassword, resetPasswordToken: undefined },
     );
   }
 
@@ -106,7 +104,7 @@ export class UserService {
     return argon.verify(hashedValue, value);
   }
 
-  hash(value: string) {
+  private hash(value: string) {
     return argon.hash(value);
   }
 }

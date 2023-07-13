@@ -28,7 +28,7 @@ export class EmailVerificationController {
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
-  @Post('/verify')
+  @Post('verify')
   @HttpCode(HttpStatus.OK)
   @Respond(VerifyResponseDto)
   @ApiOperation({ operationId: 'verify', summary: 'Verify email' })
@@ -79,7 +79,7 @@ export class EmailVerificationController {
     }
   }
 
-  @Post('/resend')
+  @Post('resend')
   @HttpCode(HttpStatus.OK)
   @Respond(ResendResponseDto)
   @ApiOperation({ operationId: 'resend', summary: 'Resend verification link' })

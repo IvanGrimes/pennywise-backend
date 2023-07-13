@@ -9,6 +9,7 @@ import {
   GoneException,
   BadRequestException,
   Body,
+  ConflictException,
 } from '@nestjs/common';
 import {
   ResetPasswordRequestDto,
@@ -23,6 +24,7 @@ import { Public, Respond } from '@lib/app/decorators';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 import {
   BadResetPasswordTokenError,
+  NewPasswordMustBeDifferent,
   ResetPasswordTokenExpiredError,
   ResetPasswordTokenNotFoundError,
 } from './reset-password.errors';
@@ -33,10 +35,10 @@ import { ApiTags } from '@nestjs/swagger';
 export class ResetPasswordController {
   constructor(private readonly resetPasswordService: ResetPasswordService) {}
 
-  @Get('/')
+  @Get('reset')
   @Public()
   @Respond(ResetPasswordResponseDto)
-  @ApiOperation({ operationId: 'request', summary: 'Reset password' })
+  @ApiOperation({ operationId: 'reset', summary: 'Reset password' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: ResetPasswordResponseDto,
@@ -60,7 +62,7 @@ export class ResetPasswordController {
     }
   }
 
-  @Post('/set-password')
+  @Post('set-password')
   @Public()
   @HttpCode(HttpStatus.OK)
   @Respond(SetPasswordResponseDto)
@@ -77,6 +79,11 @@ export class ResetPasswordController {
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: ResetPasswordTokenNotFoundError.message,
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: NewPasswordMustBeDifferent.message,
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
@@ -101,6 +108,9 @@ export class ResetPasswordController {
       }
       if (e instanceof BadResetPasswordTokenError) {
         throw new BadRequestException(e.message);
+      }
+      if (e instanceof NewPasswordMustBeDifferent) {
+        throw new ConflictException(e.message);
       }
 
       throw e;

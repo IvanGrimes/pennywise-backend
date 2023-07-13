@@ -41,7 +41,7 @@ import {
 import { EmailVerificationService } from '@modules/email-verification';
 import { SessionInterceptor, SessionNotFoundError } from '@modules/session';
 
-@Controller('/auth')
+@Controller('auth')
 @ApiTags('auth')
 @UseInterceptors(SessionInterceptor)
 export class AuthController {
@@ -50,7 +50,7 @@ export class AuthController {
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
-  @Post('/sign-up')
+  @Post('sign-up')
   @Respond(SignUpResponseDto)
   @Public()
   @ApiOperation({ operationId: 'signUp', summary: 'Sign up' })
@@ -92,7 +92,7 @@ export class AuthController {
     }
   }
 
-  @Post('/sign-in')
+  @Post('sign-in')
   @HttpCode(HttpStatus.OK)
   @Respond(SignInResponseDto)
   @Public()
@@ -135,7 +135,7 @@ export class AuthController {
   }
 
   @UseGuards(RefreshTokenGuard)
-  @Post('/refresh')
+  @Post('refresh')
   @Respond(RefreshTokenResponseDto)
   @ApiOperation({ operationId: 'refresh', summary: 'Refresh access token' })
   @HttpCode(HttpStatus.OK)
