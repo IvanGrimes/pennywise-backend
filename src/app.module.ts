@@ -1,3 +1,5 @@
+import { AccountsModule } from '@modules/accounts';
+import { TransactionsModule } from '@modules/transactions';
 import { Module } from '@nestjs/common';
 import * as Joi from 'joi';
 import { Environment } from '@src/const/Environment';
@@ -63,6 +65,8 @@ const interceptors = [
     AuthModule,
     EmailVerificationModule,
     ResetPasswordModule,
+    AccountsModule,
+    TransactionsModule,
   ],
   controllers: [],
   providers: [

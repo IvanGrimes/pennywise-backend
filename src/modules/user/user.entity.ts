@@ -1,5 +1,6 @@
+import { AccountEntity } from '@modules/accounts';
 import { EntityBase } from '@src/lib/entity.base';
-import { Column, Entity, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import type { SessionEntity } from '@modules/session';
 
@@ -26,8 +27,11 @@ export class UserEntity extends EntityBase {
 
   @OneToMany('SessionEntity', (session: SessionEntity) => session.user, {
     cascade: true,
-    eager: true,
   })
-  @JoinColumn()
   sessions!: SessionEntity[];
+
+  @OneToMany('AccountEntity', (account: AccountEntity) => account.user, {
+    cascade: true,
+  })
+  accounts!: AccountEntity[];
 }

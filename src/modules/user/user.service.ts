@@ -1,3 +1,4 @@
+import { AccountEntity } from '@modules/accounts';
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
@@ -36,11 +37,35 @@ export class UserService {
   }
 
   async saveSession({ id, session }: { id: number; session: SessionEntity }) {
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.userRepository.findOne({
+      relations: { sessions: true },
+      where: { id },
+    });
 
     if (!user) throw new UserNotFoundError();
 
-    user.sessions = [...(user.sessions ?? []), session];
+    if (!user.sessions) {
+      user.sessions = [];
+    }
+
+    user.sessions.push(session);
+
+    await this.userRepository.save(user);
+  }
+
+  async saveAccount({ id, account }: { id: number; account: AccountEntity }) {
+    const user = await this.userRepository.findOne({
+      relations: { accounts: true },
+      where: { id },
+    });
+
+    if (!user) throw new UserNotFoundError();
+
+    if (!user.accounts) {
+      user.accounts = [];
+    }
+
+    user.accounts.push(account);
 
     await this.userRepository.save(user);
   }

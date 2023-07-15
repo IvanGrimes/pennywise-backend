@@ -39,6 +39,5 @@ export class SessionEntity extends EntityBase {
 
   @Exclude()
   @ManyToOne('UserEntity', (user: UserEntity) => user.sessions)
-  @JoinColumn()
   user!: UserEntity;
 }
