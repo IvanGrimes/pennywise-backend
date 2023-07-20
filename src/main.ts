@@ -20,6 +20,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('docs', app, document, {
     jsonDocumentUrl: '/docs/schema.json',
+    yamlDocumentUrl: '/docs/schema.yaml',
   });
   app.use(cookieParser(configService.get('COOKIE_SECRET')));
 

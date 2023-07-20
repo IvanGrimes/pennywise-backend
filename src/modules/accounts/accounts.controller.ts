@@ -31,7 +31,7 @@ export class AccountsController {
 
   @Post('create')
   @Respond(CreateAccountResponseDto)
-  @ApiOperation({ operationId: 'create' })
+  @ApiOperation({ operationId: 'createAccount' })
   @ApiResponse({ status: HttpStatus.CREATED, type: CreateAccountResponseDto })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -50,9 +50,9 @@ export class AccountsController {
     }
   }
 
-  @Get('get')
+  @Get('/get')
   @Respond(GetAccountsResponseDto)
-  @ApiOperation({ operationId: 'get' })
+  @ApiOperation({ operationId: 'getAccounts' })
   @ApiResponse({ status: HttpStatus.OK, type: [GetAccountsResponseDto] })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -68,7 +68,7 @@ export class AccountsController {
 
   @Get(':id')
   @Respond(GetAccountsResponseDto)
-  @ApiOperation({ operationId: 'getById' })
+  @ApiOperation({ operationId: 'getAccountById' })
   @ApiResponse({ status: HttpStatus.OK, type: GetAccountsResponseDto })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -93,7 +93,7 @@ export class AccountsController {
 
   @Patch(':id')
   @Respond(UpdateAccountByIdResponseDto)
-  @ApiOperation({ operationId: 'updateById' })
+  @ApiOperation({ operationId: 'updateAccountById' })
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -124,7 +124,7 @@ export class AccountsController {
 
   @Delete(':id')
   @Respond(DeleteAccountByIdResponseDto)
-  @ApiOperation({ operationId: 'deleteById' })
+  @ApiOperation({ operationId: 'deleteAccountById' })
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,

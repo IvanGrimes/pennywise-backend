@@ -1,5 +1,6 @@
 import { EntityBase } from '@lib/entity.base';
 import { AccountEntity } from '@modules/accounts';
+import { CategoryEntity } from '@modules/categories';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { TransactionEntityTypeEnum } from './transactions.types';
 
@@ -24,4 +25,11 @@ export class TransactionEntity extends EntityBase {
     { cascade: ['update', 'insert'] },
   )
   account!: AccountEntity;
+
+  @ManyToOne(
+    'CategoryEntity',
+    (category: CategoryEntity) => category.transactions,
+    { cascade: ['update', 'insert'] },
+  )
+  category!: CategoryEntity;
 }

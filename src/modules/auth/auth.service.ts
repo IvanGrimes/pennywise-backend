@@ -23,9 +23,8 @@ export class AuthService {
   async signUp(signUpDto: SignUpRequestDto) {
     const user = await this.userService.create(signUpDto);
     const tokens = await this.getTokens(user);
-    const session = await this.sessionService.create(tokens);
 
-    await this.userService.saveSession({ id: user.id, session });
+    await this.sessionService.create(user, tokens);
 
     return tokens;
   }
@@ -40,12 +39,8 @@ export class AuthService {
     if (!passwordMatches) throw new WrongCredentialsError();
 
     const tokens = await this.getTokens(user, signInDto.remember);
-    const session = await this.sessionService.create(tokens);
 
-    await this.userService.saveSession({
-      id: user.id,
-      session,
-    });
+    await this.sessionService.create(user, tokens);
 
     return tokens;
   }

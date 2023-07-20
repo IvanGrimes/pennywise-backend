@@ -1,4 +1,5 @@
 import { AccountsService } from '@modules/accounts';
+import { CategoriesService } from '@modules/categories';
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import {
@@ -16,6 +17,7 @@ export class TransactionsService {
     @Inject(transactionsRepositoryDi)
     private readonly transactionRepository: Repository<TransactionEntity>,
     private readonly accountsService: AccountsService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   async create(createDto: CreateTransactionRequestDto, userId: number) {
@@ -23,32 +25,36 @@ export class TransactionsService {
       accountId: createDto.accountId,
       userId,
     });
-    const transaction = this.transactionRepository.create(createDto);
+    const category = await this.categoriesService.getById({
+      categoryId: createDto.categoryId,
+      userId,
+    });
+    const transaction = this.transactionRepository.create({
+      ...createDto,
+      account,
+      category,
+    });
 
     return this.transactionRepository.manager.transaction(
       async (transactionalEntityManager) => {
-        await transactionalEntityManager.save(transaction);
-
         if (createDto.type === TransactionEntityTypeEnum.Income) {
           account.balance += transaction.amount;
         } else {
           account.balance -= transaction.amount;
         }
 
-        if (!account.transactions) {
-          account.transactions = [];
-        }
-
-        account.transactions.push(transaction);
-
         await transactionalEntityManager.save(account);
+
+        transaction.account = account;
+
+        await transactionalEntityManager.save(transaction);
       },
     );
   }
 
   get(userId: number) {
     return this.transactionRepository.find({
-      relations: { account: true },
+      relations: { account: true, category: true },
       where: { account: { user: { id: userId } } },
     });
   }
@@ -61,7 +67,7 @@ export class TransactionsService {
     userId: number;
   }) {
     const result = await this.transactionRepository.findOne({
-      relations: { account: true },
+      relations: { account: true, category: true },
       where: { account: { user: { id: userId } }, id: transactionId },
     });
 
@@ -103,6 +109,13 @@ export class TransactionsService {
 
     transaction.description = updateByIdDto.description;
 
+    if (typeof updateByIdDto.categoryId !== 'undefined') {
+      transaction.category = await this.categoriesService.getById({
+        userId,
+        categoryId: updateByIdDto.categoryId,
+      });
+    }
+
     if (typeof updateByIdDto.amount !== 'undefined') {
       transaction.amount = updateByIdDto.amount;
     }
@@ -140,8 +153,6 @@ export class TransactionsService {
 
     return this.transactionRepository.manager.transaction(
       async (transactionalEntityManager) => {
-        transaction.account.transactions.push(transaction);
-
         await transactionalEntityManager.save(transaction);
         await transactionalEntityManager.save(currentAccount);
       },

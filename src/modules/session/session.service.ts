@@ -1,3 +1,4 @@
+import { UserEntity } from '@modules/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository, Not } from 'typeorm';
 import { SessionEntity } from './session.entity';
@@ -15,19 +16,18 @@ export class SessionService {
     private readonly clsService: ClsService,
   ) {}
 
-  async create({
-    accessToken,
-    refreshToken,
-  }: {
-    accessToken: string;
-    refreshToken?: string;
-  }) {
+  async create(
+    user: UserEntity,
+    tokens: {
+      accessToken: string;
+      refreshToken?: string;
+    },
+  ) {
     const sessionInformation: SessionInformation =
       this.clsService.get('sessionInformation');
 
     const session = this.sessionRepository.create({
-      accessToken,
-      refreshToken,
+      ...tokens,
       browserName: sessionInformation.device.client?.name,
       browserVersion: sessionInformation.device.client?.version,
       deviceType: sessionInformation.device.device?.type,
@@ -37,6 +37,8 @@ export class SessionService {
       location: sessionInformation.location,
       isRevoked: false,
     });
+
+    session.user = user;
 
     await this.sessionRepository.save(session);
 

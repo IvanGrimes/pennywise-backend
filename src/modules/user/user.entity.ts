@@ -1,4 +1,5 @@
 import { AccountEntity } from '@modules/accounts';
+import { CategoryEntity } from '@modules/categories';
 import { EntityBase } from '@src/lib/entity.base';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { Exclude } from 'class-transformer';
@@ -34,4 +35,9 @@ export class UserEntity extends EntityBase {
     cascade: true,
   })
   accounts!: AccountEntity[];
+
+  @OneToMany('CategoryEntity', (category: CategoryEntity) => category.user, {
+    cascade: true,
+  })
+  categories!: CategoryEntity[];
 }

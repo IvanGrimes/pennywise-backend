@@ -25,5 +25,9 @@ export class GetTransactionsResponseDto {
 
   @ApiProperty()
   @Expose()
+  categoryId!: number;
+
+  @ApiProperty()
+  @Expose()
   date!: Date;
 }

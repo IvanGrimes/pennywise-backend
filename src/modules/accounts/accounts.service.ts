@@ -15,11 +15,32 @@ export class AccountsService {
   ) {}
 
   async create(createDto: CreateAccountRequestDto, userId: number) {
-    const entity = this.accountsRepository.create(createDto);
+    const user = await this.userService.find({ id: userId });
+    const account = this.accountsRepository.create(createDto);
 
-    await this.accountsRepository.save(entity);
+    account.user = user;
 
-    await this.userService.saveAccount({ id: userId, account: entity });
+    if (createDto.isDefault) {
+      const defaultAccount = await this.accountsRepository.findOne({
+        relations: { user: true },
+        where: { user: { id: userId }, isDefault: true },
+      });
+
+      if (defaultAccount) {
+        defaultAccount.isDefault = false;
+
+        await this.accountsRepository.manager.transaction(
+          async (entityManager) => {
+            await entityManager.save(defaultAccount);
+            await entityManager.save(account);
+          },
+        );
+
+        return;
+      }
+    }
+
+    await this.accountsRepository.save(account);
   }
 
   get(userId: number) {

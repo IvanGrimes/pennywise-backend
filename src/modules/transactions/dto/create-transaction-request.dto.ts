@@ -16,6 +16,10 @@ export class CreateTransactionRequestDto {
 
   @ApiProperty()
   @IsNumber()
+  categoryId!: number;
+
+  @ApiProperty()
+  @IsNumber()
   accountId!: number;
 
   @ApiProperty()

@@ -1,16 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { GetAccountByIdResponseDto } from './get-account-by-id-response.dto';
 
-export class GetAccountsResponseDto {
-  @ApiProperty()
-  @Expose()
-  id!: number;
-
-  @ApiProperty()
-  @Expose()
-  name!: string;
-
-  @ApiProperty()
-  @Expose()
-  balance!: number;
-}
+export class GetAccountsResponseDto extends GetAccountByIdResponseDto {}

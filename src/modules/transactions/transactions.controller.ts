@@ -1,6 +1,8 @@
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 import { Respond, UserId } from '@lib/app/decorators';
 import { AccountNotFoundError } from '@modules/accounts';
+import { CategoryNotFoundError } from '@modules/categories/categories.errors';
+import { TransactionEntity } from '@modules/transactions/transactions.entity';
 import { TransactionNotFoundError } from './transactions.errors';
 import { TransactionEntityTypeEnum } from './transactions.types';
 import { TransactionsService } from './transactions.service';
@@ -34,7 +36,7 @@ export class TransactionsController {
 
   @Post('create')
   @Respond(CreateTransactionResponseDto)
-  @ApiOperation({ operationId: 'create' })
+  @ApiOperation({ operationId: 'createTransaction' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     type: CreateTransactionResponseDto,
@@ -64,22 +66,25 @@ export class TransactionsController {
   // @todo: add pagination
   @Get('get')
   @Respond(GetTransactionsResponseDto)
-  @ApiOperation({ operationId: 'get' })
+  @ApiOperation({ operationId: 'getTransactions' })
   @ApiResponse({ status: HttpStatus.OK, type: [GetTransactionsResponseDto] })
   async get(@UserId() userId: number) {
     const result = await this.transactionsService.get(userId);
 
-    return result.map<GetTransactionsResponseDto>((item) => ({
-      ...item,
-      accountId: item.account.id,
-      date: item.createdAt,
-      type: item.type as TransactionEntityTypeEnum,
-    }));
+    return result
+      .sort(this.sortTransactions)
+      .map<GetTransactionsResponseDto>((item) => ({
+        ...item,
+        accountId: item.account.id,
+        categoryId: item.category.id,
+        date: item.createdAt,
+        type: item.type as TransactionEntityTypeEnum,
+      }));
   }
 
   @Get(':id')
   @Respond(GetTransactionByIdResponseDto)
-  @ApiOperation({ operationId: 'getById' })
+  @ApiOperation({ operationId: 'getTransactionById' })
   @ApiResponse({ status: HttpStatus.OK, type: GetTransactionByIdResponseDto })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -96,6 +101,7 @@ export class TransactionsController {
       return {
         ...result,
         accountId: result.account.id,
+        categoryId: result.category.id,
         date: result.createdAt,
         type: result.type as TransactionEntityTypeEnum,
       };
@@ -110,7 +116,7 @@ export class TransactionsController {
 
   @Patch(':id')
   @Respond(UpdateTransactionByIdResponseDto)
-  @ApiOperation({ operationId: 'updateById' })
+  @ApiOperation({ operationId: 'updateTransactionById' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: UpdateTransactionByIdResponseDto,
@@ -118,7 +124,7 @@ export class TransactionsController {
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     type: ApiErrorResponseDto,
-    description: `${TransactionNotFoundError.message} | ${AccountNotFoundError.message}`,
+    description: `${TransactionNotFoundError.message} | ${AccountNotFoundError.message} | ${CategoryNotFoundError.message}`,
   })
   async updateById(
     @Param('id') id: number,
@@ -136,7 +142,8 @@ export class TransactionsController {
     } catch (e) {
       if (
         e instanceof TransactionNotFoundError ||
-        e instanceof AccountNotFoundError
+        e instanceof AccountNotFoundError ||
+        e instanceof CategoryNotFoundError
       ) {
         throw new NotFoundException(e.message);
       }
@@ -147,7 +154,7 @@ export class TransactionsController {
 
   @Get('account/:id')
   @Respond(GetTransactionsByAccountResponseDto)
-  @ApiOperation({ operationId: 'updateById' })
+  @ApiOperation({ operationId: 'getTransactionsByAccount' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: GetTransactionsByAccountResponseDto,
@@ -167,12 +174,15 @@ export class TransactionsController {
         userId,
       });
 
-      return result.map<GetTransactionsByAccountResponseDto>((item) => ({
-        ...item,
-        type: item.type as TransactionEntityTypeEnum,
-        accountId: item.account.id,
-        date: item.createdAt,
-      }));
+      return result
+        .sort(this.sortTransactions)
+        .map<GetTransactionsByAccountResponseDto>((item) => ({
+          ...item,
+          type: item.type as TransactionEntityTypeEnum,
+          categoryId: item.category.id,
+          accountId: item.account.id,
+          date: item.createdAt,
+        }));
     } catch (e) {
       if (e instanceof AccountNotFoundError) {
         throw new NotFoundException(e.message);
@@ -184,7 +194,7 @@ export class TransactionsController {
 
   @Delete(':id')
   @Respond(DeleteTransactionByIdResponseDto)
-  @ApiOperation({ operationId: 'deleteById' })
+  @ApiOperation({ operationId: 'deleteTransactionById' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: DeleteTransactionByIdResponseDto,
@@ -208,5 +218,7 @@ export class TransactionsController {
     }
   }
 
-  // @todo: add pagination
+  private sortTransactions(a: TransactionEntity, b: TransactionEntity) {
+    return Number(b.createdAt.getTime() - a.createdAt.getTime());
+  }
 }

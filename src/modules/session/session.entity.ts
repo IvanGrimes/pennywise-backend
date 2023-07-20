@@ -1,5 +1,5 @@
 import { EntityBase } from '@src/lib/entity.base';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import type { UserEntity } from '@modules/user';
 import { Exclude } from 'class-transformer';
 

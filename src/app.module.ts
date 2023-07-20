@@ -1,4 +1,5 @@
 import { AccountsModule } from '@modules/accounts';
+import { CategoriesModule } from '@modules/categories';
 import { TransactionsModule } from '@modules/transactions';
 import { Module } from '@nestjs/common';
 import * as Joi from 'joi';
@@ -67,6 +68,7 @@ const interceptors = [
     ResetPasswordModule,
     AccountsModule,
     TransactionsModule,
+    CategoriesModule,
   ],
   controllers: [],
   providers: [
