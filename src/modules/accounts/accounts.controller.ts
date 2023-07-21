@@ -50,6 +50,7 @@ export class AccountsController {
     }
   }
 
+  // @todo: sort accounts respecting isDefault prop
   @Get('/get')
   @Respond(GetAccountsResponseDto)
   @ApiOperation({ operationId: 'getAccounts' })

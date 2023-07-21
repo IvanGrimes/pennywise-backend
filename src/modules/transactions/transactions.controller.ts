@@ -157,7 +157,7 @@ export class TransactionsController {
   @ApiOperation({ operationId: 'getTransactionsByAccount' })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: GetTransactionsByAccountResponseDto,
+    type: [GetTransactionsByAccountResponseDto],
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,

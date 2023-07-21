@@ -72,7 +72,25 @@ export class AccountsService {
   }) {
     const account = await this.getById({ userId, accountId });
 
-    account.name = updateByIdDto.name;
+    this.accountsRepository.merge(account, updateByIdDto);
+
+    if (updateByIdDto.isDefault) {
+      const previousDefaultAccount = await this.accountsRepository.findOne({
+        relations: { user: true },
+        where: { user: { id: userId }, isDefault: true },
+      });
+
+      if (previousDefaultAccount && previousDefaultAccount.id !== account.id) {
+        previousDefaultAccount.isDefault = false;
+
+        return this.accountsRepository.manager.transaction((entityManager) =>
+          Promise.all([
+            entityManager.save(previousDefaultAccount),
+            entityManager.save(account),
+          ]),
+        );
+      }
+    }
 
     return this.accountsRepository.save(account);
   }

@@ -84,7 +84,7 @@ export class TransactionsService {
     accountId: number;
   }) {
     return this.transactionRepository.find({
-      relations: { account: true },
+      relations: { account: true, category: true },
       where: { account: { id: accountId, user: { id: userId } } },
     });
   }
