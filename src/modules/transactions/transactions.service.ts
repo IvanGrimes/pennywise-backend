@@ -1,5 +1,8 @@
+import { CurrencyEnum } from '@lib/types';
 import { AccountsService } from '@modules/accounts';
 import { CategoriesService } from '@modules/categories';
+import { ExchangeRatesService } from '@modules/exchange-rates';
+import { UserNotFoundError, UserService } from '@modules/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import {
@@ -18,6 +21,8 @@ export class TransactionsService {
     private readonly transactionRepository: Repository<TransactionEntity>,
     private readonly accountsService: AccountsService,
     private readonly categoriesService: CategoriesService,
+    private readonly exchangeRates: ExchangeRatesService,
+    private readonly userService: UserService,
   ) {}
 
   async create(createDto: CreateTransactionRequestDto, userId: number) {
@@ -52,10 +57,28 @@ export class TransactionsService {
     );
   }
 
-  get(userId: number) {
-    return this.transactionRepository.find({
+  async get({ userId, accountId }: { userId: number; accountId?: number }) {
+    const result = await this.transactionRepository.find({
       relations: { account: true, category: true },
-      where: { account: { user: { id: userId } } },
+      where: { account: { id: accountId, user: { id: userId } } },
+    });
+    const user = await this.userService.find({ id: userId });
+
+    if (!user) throw new UserNotFoundError();
+
+    return result.map<
+      Promise<TransactionEntity & { mainCurrencyAmount?: number }>
+    >(async (item) => {
+      if (item.account.currency === user.mainCurrency) return item;
+
+      return {
+        ...item,
+        mainCurrencyAmount: await this.exchangeRates.convert({
+          value: item.amount,
+          from: item.account.currency,
+          to: user.mainCurrency,
+        }),
+      };
     });
   }
 
@@ -74,19 +97,6 @@ export class TransactionsService {
     if (!result) throw new TransactionNotFoundError();
 
     return result;
-  }
-
-  async getTransactionsByAccount({
-    userId,
-    accountId,
-  }: {
-    userId: number;
-    accountId: number;
-  }) {
-    return this.transactionRepository.find({
-      relations: { account: true, category: true },
-      where: { account: { id: accountId, user: { id: userId } } },
-    });
   }
 
   async updateById({
@@ -168,6 +178,24 @@ export class TransactionsService {
   }) {
     const transaction = await this.getById({ userId, transactionId });
 
-    return this.transactionRepository.remove(transaction);
+    switch (transaction.type) {
+      case TransactionEntityTypeEnum.Income:
+        transaction.account.balance -= transaction.amount;
+        break;
+      case TransactionEntityTypeEnum.Outcome:
+        transaction.account.balance += transaction.amount;
+        break;
+      case TransactionEntityTypeEnum.Transfer:
+      // @todo: to add
+    }
+
+    return this.transactionRepository.manager.transaction(
+      async (entityManager) => {
+        await Promise.all([
+          entityManager.save(transaction.account),
+          entityManager.remove(transaction),
+        ]);
+      },
+    );
   }
 }

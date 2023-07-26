@@ -22,7 +22,7 @@ export class TransactionEntity extends EntityBase {
   @ManyToOne(
     'AccountEntity',
     (account: AccountEntity) => account.transactions,
-    { cascade: ['update', 'insert'] },
+    { cascade: ['update', 'insert'], eager: true },
   )
   account!: AccountEntity;
 

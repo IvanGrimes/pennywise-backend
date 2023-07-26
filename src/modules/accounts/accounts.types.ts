@@ -8,14 +8,6 @@ export enum AccountTypeEnum {
   deposit = 'deposit',
 }
 
-export enum AccountCurrencyEnum {
-  rub = 'rub',
-  usd = 'usd',
-  eur = 'eur',
-  gbp = 'gbp',
-  aed = 'aed',
-}
-
 export enum AccountIconEnum {
   savings = 'savings',
   card = 'card',

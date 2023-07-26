@@ -1,8 +1,5 @@
-import {
-  AccountCurrencyEnum,
-  AccountIconEnum,
-  AccountTypeEnum,
-} from '../accounts.types';
+import { CurrencyEnum } from '@lib/types';
+import { AccountIconEnum, AccountTypeEnum } from '../accounts.types';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
@@ -23,10 +20,10 @@ export class CreateAccountRequestDto {
   @IsNotEmpty()
   type!: AccountTypeEnum;
 
-  @ApiProperty({ enum: AccountCurrencyEnum })
-  @IsEnum(AccountCurrencyEnum)
+  @ApiProperty({ enum: CurrencyEnum })
+  @IsEnum(CurrencyEnum)
   @IsNotEmpty()
-  currency!: AccountCurrencyEnum;
+  currency!: CurrencyEnum;
 
   @ApiProperty({ enum: AccountIconEnum })
   @IsEnum(AccountIconEnum)

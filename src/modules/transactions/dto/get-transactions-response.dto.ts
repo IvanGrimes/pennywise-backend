@@ -17,6 +17,10 @@ export class GetTransactionsResponseDto {
 
   @ApiProperty({ nullable: true })
   @Expose()
+  mainCurrencyAmount?: number;
+
+  @ApiProperty({ nullable: true })
+  @Expose()
   description?: string;
 
   @ApiProperty()

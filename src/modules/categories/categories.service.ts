@@ -27,9 +27,15 @@ export class CategoriesService {
     await this.categoriesRepository.save(category);
   }
 
-  get(userId: number) {
+  get(
+    userId: number,
+    {
+      user = true,
+      transactions = false,
+    }: { user?: boolean; transactions?: boolean } = {},
+  ) {
     return this.categoriesRepository.find({
-      relations: { user: true },
+      relations: { user, transactions },
       where: { user: { id: userId } },
     });
   }

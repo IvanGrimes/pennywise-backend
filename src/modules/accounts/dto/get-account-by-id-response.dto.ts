@@ -1,10 +1,7 @@
+import { CurrencyEnum } from '@lib/types';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import {
-  AccountCurrencyEnum,
-  AccountIconEnum,
-  AccountTypeEnum,
-} from '../accounts.types';
+import { AccountIconEnum, AccountTypeEnum } from '../accounts.types';
 
 export class GetAccountByIdResponseDto {
   @ApiProperty()
@@ -31,7 +28,7 @@ export class GetAccountByIdResponseDto {
   @Expose()
   isDefault!: boolean;
 
-  @ApiProperty({ enum: AccountCurrencyEnum })
+  @ApiProperty({ enum: CurrencyEnum })
   @Expose()
-  currency!: AccountCurrencyEnum;
+  currency!: CurrencyEnum;
 }

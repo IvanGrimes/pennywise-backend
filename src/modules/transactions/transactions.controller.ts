@@ -69,7 +69,9 @@ export class TransactionsController {
   @ApiOperation({ operationId: 'getTransactions' })
   @ApiResponse({ status: HttpStatus.OK, type: [GetTransactionsResponseDto] })
   async get(@UserId() userId: number) {
-    const result = await this.transactionsService.get(userId);
+    const result = await Promise.all(
+      await this.transactionsService.get({ userId }),
+    );
 
     return result
       .sort(this.sortTransactions)
@@ -169,10 +171,12 @@ export class TransactionsController {
     @UserId() userId: number,
   ) {
     try {
-      const result = await this.transactionsService.getTransactionsByAccount({
-        accountId: id,
-        userId,
-      });
+      const result = await Promise.all(
+        await this.transactionsService.get({
+          accountId: id,
+          userId,
+        }),
+      );
 
       return result
         .sort(this.sortTransactions)

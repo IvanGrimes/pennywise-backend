@@ -1,12 +1,9 @@
 import { EntityBase } from '@lib/entity.base';
+import { CurrencyEnum } from '@lib/types';
 import { TransactionEntity } from '@modules/transactions';
 import { UserEntity } from '@modules/user';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
-import {
-  AccountCurrencyEnum,
-  AccountIconEnum,
-  AccountTypeEnum,
-} from './accounts.types';
+import { AccountIconEnum, AccountTypeEnum } from './accounts.types';
 
 @Entity('accounts')
 export class AccountEntity extends EntityBase {
@@ -25,8 +22,8 @@ export class AccountEntity extends EntityBase {
   @Column()
   isDefault!: boolean;
 
-  @Column({ type: 'enum', enum: AccountCurrencyEnum })
-  currency!: string;
+  @Column({ type: 'enum', enum: CurrencyEnum })
+  currency!: CurrencyEnum;
 
   @OneToMany(
     'TransactionEntity',

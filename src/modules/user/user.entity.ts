@@ -1,3 +1,4 @@
+import { CurrencyEnum } from '@lib/types';
 import { AccountEntity } from '@modules/accounts';
 import { CategoryEntity } from '@modules/categories';
 import { EntityBase } from '@src/lib/entity.base';
@@ -22,6 +23,9 @@ export class UserEntity extends EntityBase {
 
   @Column({ default: false })
   isEmailVerified!: boolean;
+
+  @Column({ enum: CurrencyEnum, default: CurrencyEnum.rub })
+  mainCurrency!: CurrencyEnum;
 
   @Column({ nullable: true })
   resetPasswordToken?: string;
