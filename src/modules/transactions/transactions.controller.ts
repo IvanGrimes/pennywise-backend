@@ -2,7 +2,6 @@ import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 import { Respond, UserId } from '@lib/app/decorators';
 import { AccountNotFoundError } from '@modules/accounts';
 import { CategoryNotFoundError } from '@modules/categories/categories.errors';
-import { TransactionEntity } from '@modules/transactions/transactions.entity';
 import { TransactionNotFoundError } from './transactions.errors';
 import { TransactionEntityTypeEnum } from './transactions.types';
 import { TransactionsService } from './transactions.service';
@@ -11,8 +10,8 @@ import {
   CreateTransactionRequestDto,
   CreateTransactionResponseDto,
   DeleteTransactionByIdResponseDto,
-  GetTransactionByIdResponseDto,
   GetTransactionsByAccountResponseDto,
+  GetTransactionsRequestDto,
   GetTransactionsResponseDto,
   UpdateTransactionByIdRequestDto,
   UpdateTransactionByIdResponseDto,
@@ -22,6 +21,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpStatus,
   NotFoundException,
   Param,
@@ -64,56 +64,28 @@ export class TransactionsController {
   }
 
   // @todo: add pagination
-  @Get('get')
+  @Post('get')
   @Respond(GetTransactionsResponseDto)
-  @ApiOperation({ operationId: 'getTransactions' })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    operationId: 'getTransactions',
+  })
   @ApiResponse({ status: HttpStatus.OK, type: [GetTransactionsResponseDto] })
-  async get(@UserId() userId: number) {
+  async get(
+    @UserId() userId: number,
+    @Body() getTransactionsDto: GetTransactionsRequestDto = {},
+  ) {
     const result = await Promise.all(
-      await this.transactionsService.get({ userId }),
+      await this.transactionsService.get({ userId, getTransactionsDto }),
     );
 
-    return result
-      .sort(this.sortTransactions)
-      .map<GetTransactionsResponseDto>((item) => ({
-        ...item,
-        accountId: item.account.id,
-        categoryId: item.category.id,
-        date: item.createdAt,
-        type: item.type as TransactionEntityTypeEnum,
-      }));
-  }
-
-  @Get(':id')
-  @Respond(GetTransactionByIdResponseDto)
-  @ApiOperation({ operationId: 'getTransactionById' })
-  @ApiResponse({ status: HttpStatus.OK, type: GetTransactionByIdResponseDto })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    type: ApiErrorResponseDto,
-    description: TransactionNotFoundError.message,
-  })
-  async getById(@Param('id') id: number, @UserId() userId: number) {
-    try {
-      const result = await this.transactionsService.getById({
-        transactionId: id,
-        userId,
-      });
-
-      return {
-        ...result,
-        accountId: result.account.id,
-        categoryId: result.category.id,
-        date: result.createdAt,
-        type: result.type as TransactionEntityTypeEnum,
-      };
-    } catch (e) {
-      if (e instanceof TransactionNotFoundError) {
-        throw new NotFoundException(e.message);
-      }
-
-      throw e;
-    }
+    return result.map<GetTransactionsResponseDto>((item) => ({
+      ...item,
+      accountId: item.account.id,
+      categoryId: item.category.id,
+      date: item.createdAt,
+      type: item.type as TransactionEntityTypeEnum,
+    }));
   }
 
   @Patch(':id')
@@ -169,24 +141,24 @@ export class TransactionsController {
   async getTransactionsByAccount(
     @Param('id') id: number,
     @UserId() userId: number,
+    @Body() getTransactionsDto: GetTransactionsRequestDto = {},
   ) {
     try {
       const result = await Promise.all(
         await this.transactionsService.get({
           accountId: id,
           userId,
+          getTransactionsDto,
         }),
       );
 
-      return result
-        .sort(this.sortTransactions)
-        .map<GetTransactionsByAccountResponseDto>((item) => ({
-          ...item,
-          type: item.type as TransactionEntityTypeEnum,
-          categoryId: item.category.id,
-          accountId: item.account.id,
-          date: item.createdAt,
-        }));
+      return result.map<GetTransactionsByAccountResponseDto>((item) => ({
+        ...item,
+        type: item.type as TransactionEntityTypeEnum,
+        categoryId: item.category.id,
+        accountId: item.account.id,
+        date: item.createdAt,
+      }));
     } catch (e) {
       if (e instanceof AccountNotFoundError) {
         throw new NotFoundException(e.message);
@@ -220,9 +192,5 @@ export class TransactionsController {
 
       throw e;
     }
-  }
-
-  private sortTransactions(a: TransactionEntity, b: TransactionEntity) {
-    return Number(b.createdAt.getTime() - a.createdAt.getTime());
   }
 }

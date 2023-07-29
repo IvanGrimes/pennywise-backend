@@ -37,6 +37,7 @@ export class CategoriesService {
     return this.categoriesRepository.find({
       relations: { user, transactions },
       where: { user: { id: userId } },
+      order: { name: 'asc' },
     });
   }
 

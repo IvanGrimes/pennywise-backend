@@ -51,7 +51,7 @@ export class AccountsController {
   }
 
   // @todo: sort accounts respecting isDefault prop
-  @Get('/get')
+  @Get('get')
   @Respond(GetAccountsResponseDto)
   @ApiOperation({ operationId: 'getAccounts' })
   @ApiResponse({ status: HttpStatus.OK, type: [GetAccountsResponseDto] })

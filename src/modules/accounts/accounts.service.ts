@@ -47,6 +47,7 @@ export class AccountsService {
     return this.accountsRepository.find({
       relations: { user: true },
       where: { user: { id: userId } },
+      order: { name: 'asc' },
     });
   }
 

@@ -7,7 +7,7 @@ export class GetTransactionsResponseDto {
   @Expose()
   id!: number;
 
-  @ApiProperty({ enum: TransactionEntityTypeEnum })
+  @ApiProperty({ enum: TransactionEntityTypeEnum, enumName: 'TransactionType' })
   @Expose()
   type!: TransactionEntityTypeEnum;
 
@@ -15,11 +15,11 @@ export class GetTransactionsResponseDto {
   @Expose()
   amount!: number;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   mainCurrencyAmount?: number;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   description?: string;
 

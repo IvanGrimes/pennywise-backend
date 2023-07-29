@@ -6,27 +6,27 @@ export class AllResponseDto {
   @Expose()
   id!: number;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   browserName!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   browserVersion!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   deviceType!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   deviceBrand!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   deviceOs!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   location!: string;
 

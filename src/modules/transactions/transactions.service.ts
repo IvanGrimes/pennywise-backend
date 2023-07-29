@@ -1,4 +1,3 @@
-import { CurrencyEnum } from '@lib/types';
 import { AccountsService } from '@modules/accounts';
 import { CategoriesService } from '@modules/categories';
 import { ExchangeRatesService } from '@modules/exchange-rates';
@@ -7,6 +6,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import {
   CreateTransactionRequestDto,
+  GetTransactionsRequestDto,
   UpdateTransactionByIdRequestDto,
 } from './dto';
 import { transactionsRepositoryDi } from './transactions.di';
@@ -57,10 +57,18 @@ export class TransactionsService {
     );
   }
 
-  async get({ userId, accountId }: { userId: number; accountId?: number }) {
+  async get({
+    userId,
+    accountId,
+  }: {
+    userId: number;
+    accountId?: number;
+    getTransactionsDto: GetTransactionsRequestDto;
+  }) {
     const result = await this.transactionRepository.find({
       relations: { account: true, category: true },
       where: { account: { id: accountId, user: { id: userId } } },
+      order: { createdAt: 'desc' },
     });
     const user = await this.userService.find({ id: userId });
 

@@ -5,7 +5,7 @@ import { Expose } from 'class-transformer';
 export class SignInResponseDto extends PickType(SignUpResponseDto, [
   'accessToken',
 ]) {
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   refreshToken?: string;
 }
