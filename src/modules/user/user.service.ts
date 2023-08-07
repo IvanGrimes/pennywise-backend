@@ -54,6 +54,10 @@ export class UserService {
     return user;
   }
 
+  updateById({ id, entity }: { id: number; entity: Partial<UserEntity> }) {
+    return this.userRepository.update(id, entity);
+  }
+
   async markEmailAsVerified(email: string) {
     const exist = await this.existByEmail(email);
 

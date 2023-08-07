@@ -1,10 +1,11 @@
 import { CurrencyEnum } from '@lib/types';
 import { AccountEntity } from '@modules/accounts';
 import { CategoryEntity } from '@modules/categories';
-import { EntityBase } from '@src/lib/entity.base';
+import { EntityBase } from '@lib/entity.base';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import type { SessionEntity } from '@modules/session';
+import { StartDayEnum } from './user.types';
 
 @Entity({ name: 'users' })
 export class UserEntity extends EntityBase {
@@ -24,9 +25,16 @@ export class UserEntity extends EntityBase {
   @Column({ default: false })
   isEmailVerified!: boolean;
 
-  // @todo: add beginning of the month (pay day)
+  @Column({
+    enum: StartDayEnum,
+    default: StartDayEnum.fifth,
+  })
+  startDay!: StartDayEnum;
 
-  @Column({ enum: CurrencyEnum, default: CurrencyEnum.rub })
+  @Column({
+    enum: CurrencyEnum,
+    default: CurrencyEnum.rub,
+  })
   mainCurrency!: CurrencyEnum;
 
   @Column({ nullable: true })
