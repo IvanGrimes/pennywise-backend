@@ -16,7 +16,7 @@ import {
   EmailAlreadyVerifiedError,
   VerificationTokenExpiredError,
 } from './email-verification.errors';
-import { UserId, Respond } from '@lib/app/decorators';
+import { UserId } from '@lib/app/decorators';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 import { UserNotFoundError } from '@modules/user';
@@ -30,7 +30,6 @@ export class EmailVerificationController {
 
   @Post('verify')
   @HttpCode(HttpStatus.OK)
-  @Respond(VerifyResponseDto)
   @ApiOperation({ operationId: 'verify', summary: 'Verify email' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -56,7 +55,9 @@ export class EmailVerificationController {
     description: EmailAlreadyVerifiedError.message,
     type: ApiErrorResponseDto,
   })
-  async verify(@Body() verifyRequestDto: VerifyRequestDto) {
+  async verify(
+    @Body() verifyRequestDto: VerifyRequestDto,
+  ): Promise<VerifyResponseDto> {
     try {
       await this.emailVerificationService.verifyEmail(verifyRequestDto);
 
@@ -81,7 +82,6 @@ export class EmailVerificationController {
 
   @Post('resend')
   @HttpCode(HttpStatus.OK)
-  @Respond(ResendResponseDto)
   @ApiOperation({ operationId: 'resend', summary: 'Resend verification link' })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -93,7 +93,7 @@ export class EmailVerificationController {
     description: EmailAlreadyVerifiedError.message,
     type: ApiErrorResponseDto,
   })
-  async resend(@UserId() userId: number) {
+  async resend(@UserId() userId: number): Promise<ResendResponseDto> {
     try {
       await this.emailVerificationService.resendVerificationLink(userId);
 

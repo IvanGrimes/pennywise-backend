@@ -2,7 +2,7 @@ import { TransactionEntityTypeEnum } from '../transactions.types';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class GetTransactionsResponseDto {
+export class TransactionItemDto {
   @ApiProperty()
   @Expose()
   id!: number;
@@ -34,4 +34,14 @@ export class GetTransactionsResponseDto {
   @ApiProperty()
   @Expose()
   date!: Date;
+}
+
+export class GetTransactionsResponseDto {
+  @ApiProperty({ type: () => [TransactionItemDto] })
+  @Expose()
+  list!: TransactionItemDto[];
+
+  @ApiProperty()
+  @Expose()
+  count!: number;
 }

@@ -14,7 +14,7 @@ export class AccountEntity extends EntityBase {
   name!: string;
 
   @Column({ type: 'enum', enum: AccountIconEnum })
-  icon!: string;
+  icon!: AccountIconEnum;
 
   @Column({ type: 'float' })
   balance!: number;

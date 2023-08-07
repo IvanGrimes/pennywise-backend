@@ -43,7 +43,11 @@ async function bootstrap() {
         ),
     }),
   );
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
+  app.useGlobalInterceptors(
+    new ClassSerializerInterceptor(reflector, {
+      excludeExtraneousValues: true,
+    }),
+  );
 
   app.enableShutdownHooks();
 

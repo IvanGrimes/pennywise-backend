@@ -1,5 +1,5 @@
 import { Controller, Get, HttpStatus, Post, Body } from '@nestjs/common';
-import { UserId, Respond, AccessToken } from '@lib/app/decorators';
+import { UserId, AccessToken } from '@lib/app/decorators';
 import { SessionService } from './session.service';
 import {
   AllResponseDto,
@@ -15,7 +15,6 @@ export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
   @Get('all')
-  @Respond(AllResponseDto)
   @ApiOperation({ operationId: 'all' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -24,7 +23,7 @@ export class SessionController {
   async getSessions(
     @UserId() userId: number,
     @AccessToken() accessToken: string,
-  ) {
+  ): Promise<AllResponseDto[]> {
     const result = await this.sessionService.findAll(userId);
 
     return result
@@ -43,8 +42,9 @@ export class SessionController {
     status: HttpStatus.OK,
     type: TerminateResponseDto,
   })
-  @Respond(TerminateResponseDto)
-  async terminateSession(@Body() terminateDto: TerminateRequestDto) {
+  async terminateSession(
+    @Body() terminateDto: TerminateRequestDto,
+  ): Promise<TerminateResponseDto> {
     await this.sessionService.revoke(terminateDto);
 
     return { success: true };
@@ -56,11 +56,10 @@ export class SessionController {
     status: HttpStatus.OK,
     type: TerminateResponseDto,
   })
-  @Respond(TerminateAllResponseDto)
   async terminateAllSessions(
     @UserId() userId: number,
     @AccessToken() accessToken: string,
-  ) {
+  ): Promise<TerminateAllResponseDto> {
     await this.sessionService.revokeAllOther({ userId, accessToken });
 
     return { success: true };

@@ -11,7 +11,7 @@ export class TransactionEntity extends EntityBase {
     enum: TransactionEntityTypeEnum,
     default: TransactionEntityTypeEnum.Outcome,
   })
-  type!: string;
+  type!: TransactionEntityTypeEnum;
 
   @Column({ type: 'float' })
   amount!: number;

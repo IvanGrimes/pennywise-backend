@@ -6,7 +6,7 @@ import {
   UpdateCategoryRequestDto,
 } from './dto';
 import { Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { CategoryEntity } from './categories.entity';
 import { categoriesRepositoryDi } from './categories.di';
 
@@ -33,10 +33,11 @@ export class CategoriesService {
       user = true,
       transactions = false,
     }: { user?: boolean; transactions?: boolean } = {},
+    findOptions: FindOptionsWhere<CategoryEntity> = {},
   ) {
     return this.categoriesRepository.find({
       relations: { user, transactions },
-      where: { user: { id: userId } },
+      where: { user: { id: userId }, ...findOptions },
       order: { name: 'asc' },
     });
   }

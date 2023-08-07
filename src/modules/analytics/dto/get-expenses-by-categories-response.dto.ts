@@ -4,6 +4,10 @@ import { Expose } from 'class-transformer';
 class Category {
   @ApiProperty()
   @Expose()
+  id!: number;
+
+  @ApiProperty()
+  @Expose()
   name!: string;
 
   @ApiProperty()

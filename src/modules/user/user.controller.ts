@@ -5,8 +5,9 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
 import { UserService } from './user.service';
-import { UserId, Respond } from '@lib/app/decorators';
+import { UserId } from '@lib/app/decorators';
 import { MeResponseDto } from './dto';
 import { UserNotFoundError } from './user.errors';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
@@ -17,7 +18,6 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  @Respond(MeResponseDto)
   @ApiOperation({ operationId: 'me' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -27,9 +27,11 @@ export class UserController {
     status: HttpStatus.UNAUTHORIZED,
     type: ApiErrorResponseDto,
   })
-  async me(@UserId() userId: number) {
+  async me(@UserId() userId: number): Promise<MeResponseDto> {
     try {
-      return this.userService.find({ id: userId });
+      const result = await this.userService.find({ id: userId });
+
+      return plainToClass(MeResponseDto, result);
     } catch (e) {
       if (e instanceof UserNotFoundError) {
         throw new UnauthorizedException(e.message);

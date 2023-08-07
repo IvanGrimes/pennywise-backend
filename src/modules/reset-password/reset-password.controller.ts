@@ -20,7 +20,7 @@ import {
 import { ResetPasswordService } from './reset-password.service';
 import { UserNotFoundError } from '@modules/user';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Public, Respond } from '@lib/app/decorators';
+import { Public } from '@lib/app/decorators';
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
 import {
   BadResetPasswordTokenError,
@@ -37,7 +37,6 @@ export class ResetPasswordController {
 
   @Get('reset')
   @Public()
-  @Respond(ResetPasswordResponseDto)
   @ApiOperation({ operationId: 'reset', summary: 'Reset password' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -48,7 +47,9 @@ export class ResetPasswordController {
     description: UserNotFoundError.message,
     type: ApiErrorResponseDto,
   })
-  async resetPassword(@Query() resetPasswordDto: ResetPasswordRequestDto) {
+  async resetPassword(
+    @Query() resetPasswordDto: ResetPasswordRequestDto,
+  ): Promise<ResetPasswordResponseDto> {
     try {
       await this.resetPasswordService.sendResetLink(resetPasswordDto);
 
@@ -65,7 +66,6 @@ export class ResetPasswordController {
   @Post('set-password')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @Respond(SetPasswordResponseDto)
   @ApiOperation({ operationId: 'setPassword', summary: 'Set new password' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -91,7 +91,9 @@ export class ResetPasswordController {
     description: ResetPasswordTokenExpiredError.message,
     type: ApiErrorResponseDto,
   })
-  async setPassword(@Body() setPasswordDto: SetPasswordRequestDto) {
+  async setPassword(
+    @Body() setPasswordDto: SetPasswordRequestDto,
+  ): Promise<SetPasswordResponseDto> {
     try {
       await this.resetPasswordService.setPassword(setPasswordDto);
 

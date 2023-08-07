@@ -24,6 +24,8 @@ export class UserEntity extends EntityBase {
   @Column({ default: false })
   isEmailVerified!: boolean;
 
+  // @todo: add beginning of the month (pay day)
+
   @Column({ enum: CurrencyEnum, default: CurrencyEnum.rub })
   mainCurrency!: CurrencyEnum;
 

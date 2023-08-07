@@ -8,5 +8,5 @@ export class SignUpResponseDto {
 
   @ApiProperty()
   @Expose()
-  refreshToken!: string;
+  refreshToken?: string;
 }

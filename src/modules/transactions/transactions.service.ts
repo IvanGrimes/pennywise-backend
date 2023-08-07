@@ -1,7 +1,9 @@
+import { OffsetPaginationDto } from '@lib/dto';
+import { getTransactionFilters } from '@lib/filters/transactions';
 import { AccountsService } from '@modules/accounts';
 import { CategoriesService } from '@modules/categories';
 import { ExchangeRatesService } from '@modules/exchange-rates';
-import { UserNotFoundError, UserService } from '@modules/user';
+import { UserEntity, UserService } from '@modules/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import {
@@ -60,34 +62,40 @@ export class TransactionsService {
   async get({
     userId,
     accountId,
+    getTransactionsDto,
+    paginationDto,
   }: {
     userId: number;
     accountId?: number;
     getTransactionsDto: GetTransactionsRequestDto;
+    paginationDto: OffsetPaginationDto;
   }) {
-    const result = await this.transactionRepository.find({
+    const filters = getTransactionFilters(getTransactionsDto);
+    const { offset = 0, limit = 10 } = paginationDto;
+    const [result, count] = await this.transactionRepository.findAndCount({
       relations: { account: true, category: true },
-      where: { account: { id: accountId, user: { id: userId } } },
+      where: {
+        type: filters.transaction.transactionType,
+        createdAt: filters.transaction.createdAt,
+        account: {
+          id: filters.account.id ?? accountId,
+          user: { id: userId },
+        },
+        category: {
+          id: filters.category.id,
+        },
+      },
       order: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
     });
     const user = await this.userService.find({ id: userId });
 
-    if (!user) throw new UserNotFoundError();
+    const mappedResult = await Promise.all(
+      result.map((item) => this.mapTransaction({ entity: item, user })),
+    );
 
-    return result.map<
-      Promise<TransactionEntity & { mainCurrencyAmount?: number }>
-    >(async (item) => {
-      if (item.account.currency === user.mainCurrency) return item;
-
-      return {
-        ...item,
-        mainCurrencyAmount: await this.exchangeRates.convert({
-          value: item.amount,
-          from: item.account.currency,
-          to: user.mainCurrency,
-        }),
-      };
-    });
+    return { result: mappedResult, count };
   }
 
   async getById({
@@ -101,10 +109,11 @@ export class TransactionsService {
       relations: { account: true, category: true },
       where: { account: { user: { id: userId } }, id: transactionId },
     });
+    const user = await this.userService.find({ id: userId });
 
     if (!result) throw new TransactionNotFoundError();
 
-    return result;
+    return this.mapTransaction({ entity: result, user });
   }
 
   async updateById({
@@ -135,7 +144,13 @@ export class TransactionsService {
     }
 
     if (typeof updateByIdDto.amount !== 'undefined') {
+      transaction.account.balance +=
+        transaction.amount * (transaction.type === 'outcome' ? 1 : -1);
+
       transaction.amount = updateByIdDto.amount;
+
+      transaction.account.balance +=
+        transaction.amount * (transaction.type === 'outcome' ? -1 : 1);
     }
 
     if (updateByIdDto.type && updateByIdDto.type !== transaction.type) {
@@ -205,5 +220,24 @@ export class TransactionsService {
         ]);
       },
     );
+  }
+
+  private async mapTransaction({
+    entity,
+    user,
+  }: {
+    entity: TransactionEntity;
+    user: UserEntity;
+  }) {
+    if (entity.account.currency === user.mainCurrency) return entity;
+
+    return {
+      ...entity,
+      mainCurrencyAmount: await this.exchangeRates.convert({
+        value: entity.amount,
+        from: entity.account.currency,
+        to: user.mainCurrency,
+      }),
+    };
   }
 }

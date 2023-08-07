@@ -1,5 +1,6 @@
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
-import { Respond, UserId } from '@lib/app/decorators';
+import { UserId } from '@lib/app/decorators';
+import { plainToClass } from 'class-transformer';
 import { AccountNotFoundError } from './accounts.errors';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -30,7 +31,6 @@ export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 
   @Post('create')
-  @Respond(CreateAccountResponseDto)
   @ApiOperation({ operationId: 'createAccount' })
   @ApiResponse({ status: HttpStatus.CREATED, type: CreateAccountResponseDto })
   @ApiResponse({
@@ -44,7 +44,7 @@ export class AccountsController {
     try {
       await this.accountsService.create(createRequestDto, userId);
 
-      return { success: true };
+      return plainToClass(CreateAccountResponseDto, { success: true });
     } catch (e) {
       throw new InternalServerErrorException(e);
     }
@@ -52,7 +52,6 @@ export class AccountsController {
 
   // @todo: sort accounts respecting isDefault prop
   @Get('get')
-  @Respond(GetAccountsResponseDto)
   @ApiOperation({ operationId: 'getAccounts' })
   @ApiResponse({ status: HttpStatus.OK, type: [GetAccountsResponseDto] })
   @ApiResponse({
@@ -61,14 +60,15 @@ export class AccountsController {
   })
   async get(@UserId() userId: number) {
     try {
-      return this.accountsService.get(userId);
+      const result = await this.accountsService.get(userId);
+
+      return result.map((item) => plainToClass(GetAccountsResponseDto, item));
     } catch (e) {
       throw new InternalServerErrorException(e);
     }
   }
 
   @Get(':id')
-  @Respond(GetAccountsResponseDto)
   @ApiOperation({ operationId: 'getAccountById' })
   @ApiResponse({ status: HttpStatus.OK, type: GetAccountsResponseDto })
   @ApiResponse({
@@ -82,7 +82,9 @@ export class AccountsController {
   })
   async getById(@Param('id') accountId: number, @UserId() userId: number) {
     try {
-      return this.accountsService.getById({ userId, accountId });
+      const result = this.accountsService.getById({ userId, accountId });
+
+      return plainToClass(GetAccountsResponseDto, result);
     } catch (e) {
       if (e instanceof AccountNotFoundError) {
         throw new NotFoundException(e.message);
@@ -93,7 +95,6 @@ export class AccountsController {
   }
 
   @Patch(':id')
-  @Respond(UpdateAccountByIdResponseDto)
   @ApiOperation({ operationId: 'updateAccountById' })
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({
@@ -113,7 +114,7 @@ export class AccountsController {
         updateByIdDto,
       });
 
-      return { success: true };
+      return plainToClass(UpdateAccountByIdResponseDto, { success: true });
     } catch (e) {
       if (e instanceof AccountNotFoundError) {
         throw new NotFoundException(e.message);
@@ -124,7 +125,6 @@ export class AccountsController {
   }
 
   @Delete(':id')
-  @Respond(DeleteAccountByIdResponseDto)
   @ApiOperation({ operationId: 'deleteAccountById' })
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({
@@ -136,7 +136,7 @@ export class AccountsController {
     try {
       await this.accountsService.deleteById({ userId, accountId: id });
 
-      return { success: true };
+      return plainToClass(DeleteAccountByIdResponseDto, { success: true });
     } catch (e) {
       throw e;
     }

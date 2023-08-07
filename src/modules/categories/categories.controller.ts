@@ -1,5 +1,6 @@
 import { ApiErrorResponseDto } from '@lib/api/api-error-response.dto';
-import { Respond, UserId } from '@lib/app/decorators';
+import { UserId } from '@lib/app/decorators';
+import { plainToClass } from 'class-transformer';
 import { CategoryNotFoundError } from './categories.errors';
 import {
   Body,
@@ -30,35 +31,37 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post('create')
-  @Respond(CreateCategoryResponseDto)
   @ApiOperation({ operationId: 'createCategory' })
   @ApiResponse({ status: HttpStatus.CREATED, type: CreateCategoryResponseDto })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR })
   async create(
     @Body() createCategoryDto: CreateCategoryRequestDto,
     @UserId() userId: number,
-  ) {
+  ): Promise<CreateCategoryResponseDto> {
     await this.categoriesService.create(createCategoryDto, userId);
 
     return { success: true };
   }
 
   @Get('get')
-  @Respond(GetCategoriesResponseDto)
   @ApiOperation({ operationId: 'getCategories' })
   @ApiResponse({ status: HttpStatus.OK, type: [GetCategoriesResponseDto] })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR })
-  async get(@UserId() userId: number) {
-    return this.categoriesService.get(userId);
+  async get(@UserId() userId: number): Promise<GetCategoriesResponseDto[]> {
+    const result = await this.categoriesService.get(userId);
+
+    return result.map((item) => plainToClass(GetCategoriesResponseDto, item));
   }
 
   @Get(':id')
-  @Respond(GetCategoriesResponseDto)
   @ApiOperation({ operationId: 'getCategoryById' })
   @ApiResponse({ status: HttpStatus.OK, type: GetCategoriesResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, type: ApiErrorResponseDto })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR })
-  async getById(@Param('id') id: number, @UserId() userId: number) {
+  async getById(
+    @Param('id') id: number,
+    @UserId() userId: number,
+  ): Promise<GetCategoriesResponseDto> {
     try {
       return this.categoriesService.getById({ userId, categoryId: id });
     } catch (e) {
@@ -71,7 +74,6 @@ export class CategoriesController {
   }
 
   @Patch('update/:id')
-  @Respond(UpdateCategoryResponseDto)
   @ApiOperation({ operationId: 'updateCategory' })
   @ApiResponse({ status: HttpStatus.OK, type: [UpdateCategoryResponseDto] })
   @ApiResponse({
@@ -84,7 +86,7 @@ export class CategoriesController {
     @Body() updateCategoryDto: UpdateCategoryRequestDto,
     @Param('id') id: number,
     @UserId() userId: number,
-  ) {
+  ): Promise<UpdateCategoryResponseDto> {
     try {
       await this.categoriesService.update({
         updateCategoryDto,
@@ -103,7 +105,6 @@ export class CategoriesController {
   }
 
   @Delete('delete/:id')
-  @Respond(DeleteCategoryResponseDto)
   @ApiOperation({ operationId: 'deleteById' })
   @ApiResponse({ status: HttpStatus.OK, type: DeleteCategoryResponseDto })
   @ApiResponse({
@@ -116,7 +117,7 @@ export class CategoriesController {
     @Param('id') id: number,
     @UserId() userId: number,
     @Body() deleteCategoryDto: DeleteCategoryRequestDto,
-  ) {
+  ): Promise<DeleteCategoryResponseDto> {
     try {
       await this.categoriesService.deleteById({
         categoryId: id,

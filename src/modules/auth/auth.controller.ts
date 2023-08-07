@@ -31,13 +31,7 @@ import {
 import { UserAlreadyExistsError, UserNotFoundError } from '@modules/user';
 import { refreshTokenCookie } from '@src/const/refreshTokenCookie';
 import { RefreshTokenGuard } from '@lib/app/guards';
-import {
-  FromUser,
-  UserId,
-  Public,
-  Respond,
-  AccessToken,
-} from '@lib/app/decorators';
+import { FromUser, UserId, Public, AccessToken } from '@lib/app/decorators';
 import { EmailVerificationService } from '@modules/email-verification';
 import { SessionInterceptor, SessionNotFoundError } from '@modules/session';
 
@@ -51,7 +45,6 @@ export class AuthController {
   ) {}
 
   @Post('sign-up')
-  @Respond(SignUpResponseDto)
   @Public()
   @ApiOperation({ operationId: 'signUp', summary: 'Sign up' })
   @ApiResponse({
@@ -69,7 +62,7 @@ export class AuthController {
   async signUp(
     @Body() signUpDto: SignUpRequestDto,
     @Res({ passthrough: true }) response: Response,
-  ) {
+  ): Promise<SignUpResponseDto> {
     try {
       const result = await this.authService.signUp(signUpDto);
 
@@ -94,7 +87,6 @@ export class AuthController {
 
   @Post('sign-in')
   @HttpCode(HttpStatus.OK)
-  @Respond(SignInResponseDto)
   @Public()
   @ApiOperation({ operationId: 'signIn', summary: 'Sign in' })
   @ApiResponse({
@@ -110,7 +102,7 @@ export class AuthController {
     @Body() signInDto: SignInRequestDto,
     @Res({ passthrough: true }) response: Response,
     @Req() request: Request,
-  ) {
+  ): Promise<SignInResponseDto> {
     try {
       const result = await this.authService.signIn(signInDto);
 
@@ -136,7 +128,6 @@ export class AuthController {
 
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
-  @Respond(RefreshTokenResponseDto)
   @ApiOperation({ operationId: 'refresh', summary: 'Refresh access token' })
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
@@ -154,7 +145,7 @@ export class AuthController {
     @UserId() userId: number,
     @FromUser('refreshToken') refreshToken: string,
     @AccessToken() accessToken: string,
-  ) {
+  ): Promise<RefreshTokenResponseDto> {
     try {
       const result = await this.authService.refresh({
         userId,

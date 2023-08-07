@@ -1,7 +1,9 @@
+import { getTransactionFilters } from '@lib/filters/transactions';
+import { Injectable } from '@nestjs/common';
 import { CategoriesService } from '@modules/categories';
 import { ExchangeRatesService } from '@modules/exchange-rates';
-import { TransactionEntityTypeEnum } from '@modules/transactions/transactions.types';
-import { Injectable } from '@nestjs/common';
+import { TransactionEntityTypeEnum } from '@modules/transactions';
+import { GetExpensesByCategoriesRequestDto } from './dto';
 
 @Injectable()
 export class AnalyticsService {
@@ -10,31 +12,47 @@ export class AnalyticsService {
     private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
-  async getExpensesByCategories(userId: number) {
-    const categories = await this.categoriesService.get(userId, {
-      transactions: true,
-      user: true,
-    });
+  async getExpensesByCategories({
+    userId,
+    getExpensesByCategoriesDto,
+  }: {
+    userId: number;
+    getExpensesByCategoriesDto: GetExpensesByCategoriesRequestDto;
+  }) {
+    const filters = getTransactionFilters(getExpensesByCategoriesDto);
+    const categories = await this.categoriesService.get(
+      userId,
+      {
+        transactions: true,
+        user: true,
+      },
+      {
+        id: filters.category.id,
+        transactions: {
+          type: filters.transaction.transactionType,
+          createdAt: filters.transaction.createdAt,
+          account: { id: filters.account.id },
+        },
+      },
+    );
 
     const result = await categories.reduce<
       Promise<
         {
-          category: { name: string; color: string };
+          category: { id: number; name: string; color: string };
           amount: number;
         }[]
       >
     >(async (acc, item) => {
       (await acc).push({
         category: {
+          id: item.id,
           name: item.name,
           color: item.color,
         },
         amount: Math.round(
           (await item.transactions?.reduce(async (acc1, item1) => {
-            let amount =
-              item1.type === TransactionEntityTypeEnum.Outcome
-                ? item1.amount
-                : 0;
+            let amount = item1.amount;
 
             if (item1.account.currency !== item.user.mainCurrency) {
               amount = await this.exchangeRatesService.convert({
